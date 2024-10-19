@@ -1,10 +1,28 @@
-enum ErrorRangeOption {
-    Rpm_0,
-    Rpm_50,
-    Rpm_100,
-    Rpm_200,
-}
+use num_enum::{TryFromPrimitive, IntoPrimitive};
 
+pub(crate) const FAN1_BASE: u8 = 0x30;
+pub(crate) const FAN2_BASE: u8 = 0x40;
+pub(crate) const FAN3_BASE: u8 = 0x50;
+pub(crate) const FAN4_BASE: u8 = 0x60;
+pub(crate) const FAN5_BASE: u8 = 0x70;
+
+pub(crate) const FAN_SETTING_OFFSET: u8 = 0;
+pub(crate) const PWM_DIVIDE_OFFSET: u8 = 1;
+pub(crate) const FAN_CONFIGURATION1_OFFSET: u8 = 2;
+pub(crate) const FAN_CONFIGURATION2_OFFSET: u8 = 3;
+pub(crate) const GAIN_OFFSET: u8 = 5;
+pub(crate) const FAN_SPIN_UP_CONFIGURATION_OFFSET: u8 = 6;
+pub(crate) const FAN_MAX_STEP_OFFSET: u8 = 7;
+pub(crate) const FAN_MINIMUM_DRIVE_OFFSET: u8 = 8;
+pub(crate) const FAN_VALID_TACH_COUNT_OFFSET: u8 = 9;
+pub(crate) const FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET: u8 = 10;
+pub(crate) const FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET: u8 = 11;
+pub(crate) const TACH_TARGET_LOW_BYTE_OFFSET: u8 = 12;
+pub(crate) const TACH_TARGET_HIGH_BYTE_OFFSET: u8 = 13;
+pub(crate) const TACH_READING_HIGH_BYTE_OFFSET: u8 = 14;
+pub(crate) const TACH_READ_LOW_BYTE_OFFSET: u8 = 15;
+
+#[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum Registers {
     Configuration = 0x20,
@@ -62,4 +80,48 @@ pub enum Registers {
     Tach3TargetHighByte = 0x5D,
     Tach3ReadingHighByte = 0x5E,
     Tach3ReadLowByte = 0x5F,
+    Fan4Setting = 0x60,
+    Pwm4Divide = 0x61,
+    Fan4Configuration1 = 0x62,
+    Fan4Configuration2 = 0x63,
+    Gain4 = 0x65,
+    Fan4SpinUpConfiguration = 0x66,
+    Fan4MaxStep = 0x67,
+    Fan4MinimumDrive = 0x68,
+    Fan4ValidTachCount = 0x69,
+    Fan4DriveFailBandLowByte = 0x6A,
+    Fan4DriveFailBandHighByte = 0x6B,
+    Tach4TargetLowByte = 0x6C,
+    Tach4TargetHighByte = 0x6D,
+    Tach4ReadingHighByte = 0x6E,
+    Tach4ReadLowByte = 0x6F,
+    Fan5Setting = 0x70,
+    Pwm5Divide = 0x71,
+    Fan5Configuration1 = 0x72,
+    Fan5Configuration2 = 0x73,
+    Gain5 = 0x75,
+    Fan5SpinUpConfiguration = 0x76,
+    Fan5MaxStep = 0x77,
+    Fan5MinimumDrive = 0x78,
+    Fan5ValidTachCount = 0x79,
+    Fan5DriveFailBandLowByte = 0x7A,
+    Fan5DriveFailBandHighByte = 0x7B,
+    Tach5TargetLowByte = 0x7C,
+    Tach5TargetHighByte = 0x7D,
+    Tach5ReadingHighByte = 0x7E,
+    Tach5ReadLowByte = 0x7F,
+    SoftwareLock = 0xEF,
+    ProductFeatures = 0xFC,
+    ProductId = 0xFD,
+    ManufacturerId = 0xFE,
+    Revision = 0xFF,
+}
+
+#[derive(Copy, Clone, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
+pub enum ProductId {
+    Emc2305 = 0x34,
+    Emc2303 = 0x35,
+    Emc2302 = 0x36,
+    Emc2301 = 0x37,
 }

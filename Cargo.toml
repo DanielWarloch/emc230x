@@ -10,5 +10,7 @@ keywords = ["embedded", "fan", "emc230x"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+defmt = "0.3.8"
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
+num_enum = { version = "0.7.3", default-features = false }
