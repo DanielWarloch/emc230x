@@ -1,7 +1,11 @@
 [package]
 name = "emc230x"
+description = "An async driver for the EMC230x family of fan controllerss"
+repository = "https://github.com/retroctrl/emc230x/"
 version = "0.1.0"
 edition = "2021"
+license = "MPL-2.0"
+keywords = ["embedded", "fan", "emc230x"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
