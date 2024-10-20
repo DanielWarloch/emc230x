@@ -88,6 +88,10 @@ pub async fn dump_info(dev: &mut impl Emc230x) -> Result<(), Error> {
     defmt::info!("Address: {:#04x}", dev.address());
     defmt::info!("Fan Count: {}", count);
 
+    defmt_info_register!(dev, software_lock);
+    defmt_info_register!(dev, product_features);
+    defmt_info_register!(dev, product_id);
+
     defmt_info_register!(dev, config);
     defmt_info_register!(dev, status);
     defmt_info_register!(dev, stall_status);
