@@ -32,11 +32,11 @@ macro_rules! fetch_register {
     ($func:ident, $register:expr, $return_type:ty) => {
         pub fn $func(&mut self) -> impl Future<Output = Result<$return_type, Error>> + '_ {
             async {
-                let mut data = [0];
-                self.write_register($register, &mut data).await?;
-                data[0]
+                Ok(self
+                    .read_register($register)
+                    .await?
                     .try_into()
-                    .map_err(|_| Error::RegisterTypeConversion)
+                    .map_err(|_| Error::RegisterTypeConversion)?)
             }
         }
     };
@@ -66,9 +66,7 @@ macro_rules! fetch_fan_register {
                     .try_into()
                     .map_err(|_| Error::InvalidRegister)?;
 
-                let mut data = [0];
-                self.write_register(reg, &mut data).await?;
-                Ok(data[0])
+                Ok(self.read_register(reg).await?)
             }
         }
     };
@@ -202,6 +200,8 @@ impl<I2C: I2c> Emc230x<I2C> {
         self.valid_fan(sel)?;
         match mode {
             FanControl::Direct(_duty) => {
+                let set_value = _duty * (100 / 255);
+                // let result = self.
                 todo!()
                 // self.set_direct(duty).await
             }
@@ -216,20 +216,29 @@ impl<I2C: I2c> Emc230x<I2C> {
     fn write_register<'a>(
         &'a mut self,
         reg: Register,
-        data: &'a mut [u8],
+        data: u8,
     ) -> impl Future<Output = Result<(), Error>> + 'a {
-        async {
+        async move {
             let addr = self.address();
-            self.i2c
-                .write_read(addr, &[reg as u8], data)
-                .await
-                .map_err(|_| Error::I2c)
+            let data = [reg as u8, data];
+            self.i2c.write(addr, &data).await.map_err(|_| Error::I2c)
         }
     }
 
     /// Read a value from a register on the device
-    fn read_register(&mut self, reg: Register) -> impl Future<Output = Result<u8, Error>> {
-        async { todo!() }
+    fn read_register<'a>(
+        &'a mut self,
+        reg: Register,
+    ) -> impl Future<Output = Result<u8, Error>> + 'a {
+        async {
+            let addr = self.address();
+            let mut data = [0];
+            self.i2c
+                .write_read(addr, &[reg as u8], data.as_mut_slice())
+                .await
+                .map_err(|_| Error::I2c)?;
+            Ok(data[0])
+        }
     }
 
     /// Determine if the fan number is valid
