@@ -117,11 +117,22 @@ pub enum Registers {
     Revision = 0xFF,
 }
 
-#[derive(Copy, Clone, IntoPrimitive, TryFromPrimitive)]
+#[derive(Copy, Clone, Debug, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum ProductId {
     Emc2305 = 0x34,
     Emc2303 = 0x35,
     Emc2302 = 0x36,
     Emc2301 = 0x37,
+}
+
+impl defmt::Format for ProductId {
+    fn format(&self, f: defmt::Formatter) {
+        match self {
+            ProductId::Emc2305 => defmt::write!(f, "EMC2305"),
+            ProductId::Emc2303 => defmt::write!(f, "EMC2303"),
+            ProductId::Emc2302 => defmt::write!(f, "EMC2302"),
+            ProductId::Emc2301 => defmt::write!(f, "EMC2301"),
+        }
+    }
 }
