@@ -33,7 +33,7 @@ macro_rules! fetch_register {
         fn $func(&mut self) -> impl Future<Output = Result<$return_type, Error>> {
             async {
                 let mut data = [0];
-                self.write_read_register($register, &mut data).await?;
+                self.write_register($register, &mut data).await?;
                 data[0].try_into().map_err(|_| Error::RegisterTypeConversion)
             }
         }
@@ -60,7 +60,7 @@ macro_rules! fetch_fan_register {
                 let reg: Registers = (base + $offset).try_into().map_err(|_| Error::InvalidRegister)?;
 
                 let mut data = [0];
-                self.write_read_register(reg, &mut data).await?;
+                self.write_register(reg, &mut data).await?;
                 Ok(data[0])
             }
         }
@@ -146,17 +146,11 @@ pub trait Emc230x {
     fn write_register(
         &mut self,
         reg: Registers,
-        value: &[u8],
+        data: &mut [u8],
     ) -> impl Future<Output = Result<(), Error>>;
 
     /// Read a value from a register on the device
     fn read_register(&mut self, reg: Registers) -> impl Future<Output = Result<u8, Error>>;
-
-    fn write_read_register(
-        &mut self,
-        reg: Registers,
-        data: &mut [u8],
-    ) -> impl Future<Output = Result<(), Error>>;
 
     /// Get the number of fans the device supports
     fn count(&self) -> u8;
@@ -231,18 +225,6 @@ impl<I2C: I2c> Emc230x for Emc2301<I2C> {
 
     fn write_register(
         &mut self,
-        _reg: Registers,
-        _value: &[u8],
-    ) -> impl Future<Output = Result<(), Error>> {
-        async { todo!() }
-    }
-
-    fn read_register(&mut self, _reg: Registers) -> impl Future<Output = Result<u8, Error>> {
-        async { todo!() }
-    }
-
-    fn write_read_register(
-        &mut self,
         reg: Registers,
         data: &mut [u8],
     ) -> impl Future<Output = Result<(), Error>> {
@@ -253,6 +235,10 @@ impl<I2C: I2c> Emc230x for Emc2301<I2C> {
                 .await
                 .map_err(|_| Error::I2c)
         }
+    }
+
+    fn read_register(&mut self, _reg: Registers) -> impl Future<Output = Result<u8, Error>> {
+        async { todo!() }
     }
 }
 
