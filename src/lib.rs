@@ -30,11 +30,13 @@ pub enum FanSelect {
 /// Fetch a register from the device which applies to all fans
 macro_rules! fetch_register {
     ($func:ident, $register:expr, $return_type:ty) => {
-        fn $func(&mut self) -> impl Future<Output = Result<$return_type, Error>> {
+        pub fn $func(&mut self) -> impl Future<Output = Result<$return_type, Error>> + '_ {
             async {
                 let mut data = [0];
                 self.write_register($register, &mut data).await?;
-                data[0].try_into().map_err(|_| Error::RegisterTypeConversion)
+                data[0]
+                    .try_into()
+                    .map_err(|_| Error::RegisterTypeConversion)
             }
         }
     };
@@ -43,7 +45,10 @@ macro_rules! fetch_register {
 /// Fetch a register from the device which applies to a specific fan
 macro_rules! fetch_fan_register {
     ($func:ident, $offset:expr, $return_type:ty) => {
-        fn $func(&mut self, sel: FanSelect) -> impl Future<Output = Result<$return_type, Error>> {
+        pub fn $func(
+            &mut self,
+            sel: FanSelect,
+        ) -> impl Future<Output = Result<$return_type, Error>> + '_ {
             async move {
                 self.valid_fan(sel)?;
                 let base = match sel {
@@ -57,7 +62,9 @@ macro_rules! fetch_fan_register {
                     },
                 };
 
-                let reg: Registers = (base + $offset).try_into().map_err(|_| Error::InvalidRegister)?;
+                let reg: Registers = (base + $offset)
+                    .try_into()
+                    .map_err(|_| Error::InvalidRegister)?;
 
                 let mut data = [0];
                 self.write_register(reg, &mut data).await?;
@@ -68,7 +75,7 @@ macro_rules! fetch_fan_register {
 }
 
 /// Dump all the info and registers from the EMC230x Device
-pub async fn dump_info(dev: &mut impl Emc230x) -> Result<(), Error> {
+pub async fn dump_info<I2C: I2c>(dev: &mut Emc230x<I2C>) -> Result<(), Error> {
     macro_rules! defmt_info_register {
         ($dev:expr, $reg:tt) => {
             let value = $dev.$reg().await?;
@@ -125,7 +132,68 @@ pub async fn dump_info(dev: &mut impl Emc230x) -> Result<(), Error> {
     Ok(())
 }
 
-pub trait Emc230x {
+pub struct Emc230x<I2C> {
+    /// I2C bus
+    i2c: I2C,
+
+    /// I2C address of the device
+    address: u8,
+
+    /// Number of fans the device supports
+    count: u8,
+}
+
+impl<I2C: I2c> Emc230x<I2C> {
+    /// Probe the I2C bus for an EMC230x device at the specified address
+    pub fn probe(i2c: I2C, address: u8) -> impl Future<Output = Result<Self, Error>> {
+        async move {
+            let mut i2c = i2c;
+            let id = &mut [0];
+
+            // Manually setup the read to the ProductId register because the structure isn't formed yet
+            i2c.write_read(address, &[Registers::ProductId as u8], id)
+                .await
+                .map_err(|_| Error::I2c)?;
+
+            let id: ProductId = id[0]
+                .try_into()
+                .map_err(|_| Error::RegisterTypeConversion)?;
+
+            match id.into() {
+                ProductId::Emc2301 => Ok(Self {
+                    i2c,
+                    address,
+                    count: 1,
+                }),
+                ProductId::Emc2302 => Ok(Self {
+                    i2c,
+                    address,
+                    count: 2,
+                }),
+                ProductId::Emc2303 => Ok(Self {
+                    i2c,
+                    address,
+                    count: 3,
+                }),
+                ProductId::Emc2305 => Ok(Self {
+                    i2c,
+                    address,
+                    count: 5,
+                }),
+            }
+        }
+    }
+
+    /// Get the I2C address of the device
+    fn address(&self) -> u8 {
+        self.address
+    }
+
+    /// Get the number of fans the device supports
+    fn count(&self) -> u8 {
+        self.count
+    }
+
     fn mode(&mut self, sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
         async { todo!() }
     }
@@ -144,20 +212,25 @@ pub trait Emc230x {
         }
     }
 
-    fn address(&self) -> u8;
-
     /// Write a value to a register on the device
-    fn write_register(
-        &mut self,
+    fn write_register<'a>(
+        &'a mut self,
         reg: Registers,
-        data: &mut [u8],
-    ) -> impl Future<Output = Result<(), Error>>;
+        data: &'a mut [u8],
+    ) -> impl Future<Output = Result<(), Error>> + 'a {
+        async {
+            let addr = self.address();
+            self.i2c
+                .write_read(addr, &[reg as u8], data)
+                .await
+                .map_err(|_| Error::I2c)
+        }
+    }
 
     /// Read a value from a register on the device
-    fn read_register(&mut self, reg: Registers) -> impl Future<Output = Result<u8, Error>>;
-
-    /// Get the number of fans the device supports
-    fn count(&self) -> u8;
+    fn read_register(&mut self, reg: Registers) -> impl Future<Output = Result<u8, Error>> {
+        async { todo!() }
+    }
 
     /// Determine if the fan number is valid
     fn valid_fan(&self, select: FanSelect) -> Result<(), Error> {
@@ -194,8 +267,16 @@ pub trait Emc230x {
     fetch_fan_register!(max_step, FAN_MAX_STEP_OFFSET, u8);
     fetch_fan_register!(minimum_drive, FAN_MINIMUM_DRIVE_OFFSET, u8);
     fetch_fan_register!(valid_tach_count, FAN_VALID_TACH_COUNT_OFFSET, u8);
-    fetch_fan_register!(drive_fail_band_low_byte, FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET, u8);
-    fetch_fan_register!(drive_fail_band_high_byte, FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET, u8);
+    fetch_fan_register!(
+        drive_fail_band_low_byte,
+        FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET,
+        u8
+    );
+    fetch_fan_register!(
+        drive_fail_band_high_byte,
+        FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET,
+        u8
+    );
     fetch_fan_register!(tach_target_low_byte, TACH_TARGET_LOW_BYTE_OFFSET, u8);
     fetch_fan_register!(tach_target_high_byte, TACH_TARGET_HIGH_BYTE_OFFSET, u8);
     fetch_fan_register!(tach_reading_high_byte, TACH_READING_HIGH_BYTE_OFFSET, u8);
@@ -205,45 +286,6 @@ pub trait Emc230x {
     fetch_register!(software_lock, Registers::SoftwareLock, u8);
     fetch_register!(product_features, Registers::ProductFeatures, u8);
     fetch_register!(product_id, Registers::ProductId, ProductId);
-}
-
-pub struct Emc2301<I2C> {
-    i2c: I2C,
-    address: u8,
-}
-
-impl<I2C: I2c> Emc2301<I2C> {
-    pub fn new(i2c: I2C, addr: u8) -> Self {
-        Self { i2c, address: addr }
-    }
-}
-
-impl<I2C: I2c> Emc230x for Emc2301<I2C> {
-    fn count(&self) -> u8 {
-        1
-    }
-
-    fn address(&self) -> u8 {
-        self.address
-    }
-
-    fn write_register(
-        &mut self,
-        reg: Registers,
-        data: &mut [u8],
-    ) -> impl Future<Output = Result<(), Error>> {
-        async {
-            let addr = self.address();
-            self.i2c
-                .write_read(addr, &[reg as u8], data)
-                .await
-                .map_err(|_| Error::I2c)
-        }
-    }
-
-    fn read_register(&mut self, _reg: Registers) -> impl Future<Output = Result<u8, Error>> {
-        async { todo!() }
-    }
 }
 
 #[cfg(test)]

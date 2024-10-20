@@ -3,6 +3,9 @@ pub enum Error {
     /// I2C bus error
     I2c,
 
+    /// Device return invalid device identifier
+    InvalidDeviceId,
+
     /// Invalid fan number
     InvalidFan,
 
@@ -17,6 +20,7 @@ impl defmt::Format for Error {
     fn format(&self, f: defmt::Formatter) {
         match self {
             Error::I2c => defmt::write!(f, "I2c"),
+            Error::InvalidDeviceId => defmt::write!(f, "InvalidDeviceId"),
             Error::InvalidFan => defmt::write!(f, "InvalidFan"),
             Error::InvalidRegister => defmt::write!(f, "InvalidRegister"),
             Error::RegisterTypeConversion => defmt::write!(f, "RegisterTypeConversion"),
