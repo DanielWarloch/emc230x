@@ -1,4 +1,4 @@
-use num_enum::{TryFromPrimitive, IntoPrimitive};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 pub(crate) const FAN1_BASE: u8 = 0x30;
 pub(crate) const FAN2_BASE: u8 = 0x40;
@@ -24,7 +24,7 @@ pub(crate) const TACH_READ_LOW_BYTE_OFFSET: u8 = 15;
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum Registers {
+pub enum Register {
     Configuration = 0x20,
     FanStatus = 0x24,
     FanStallStatus = 0x25,

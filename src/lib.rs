@@ -8,8 +8,8 @@ use hal::i2c::I2c;
 mod error;
 use error::Error;
 
-mod types;
-use types::*;
+mod registers;
+use registers::*;
 
 #[derive(Clone, Copy, Debug)]
 struct FanSetting {
@@ -62,7 +62,7 @@ macro_rules! fetch_fan_register {
                     },
                 };
 
-                let reg: Registers = (base + $offset)
+                let reg: Register = (base + $offset)
                     .try_into()
                     .map_err(|_| Error::InvalidRegister)?;
 
@@ -151,7 +151,7 @@ impl<I2C: I2c> Emc230x<I2C> {
             let id = &mut [0];
 
             // Manually setup the read to the ProductId register because the structure isn't formed yet
-            i2c.write_read(address, &[Registers::ProductId as u8], id)
+            i2c.write_read(address, &[Register::ProductId as u8], id)
                 .await
                 .map_err(|_| Error::I2c)?;
 
@@ -215,7 +215,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Write a value to a register on the device
     fn write_register<'a>(
         &'a mut self,
-        reg: Registers,
+        reg: Register,
         data: &'a mut [u8],
     ) -> impl Future<Output = Result<(), Error>> + 'a {
         async {
@@ -228,7 +228,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Read a value from a register on the device
-    fn read_register(&mut self, reg: Registers) -> impl Future<Output = Result<u8, Error>> {
+    fn read_register(&mut self, reg: Register) -> impl Future<Output = Result<u8, Error>> {
         async { todo!() }
     }
 
@@ -246,16 +246,16 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     // General register access
-    fetch_register!(config, Registers::Configuration, u8);
-    fetch_register!(status, Registers::FanStatus, u8);
-    fetch_register!(stall_status, Registers::FanStallStatus, u8);
-    fetch_register!(spin_status, Registers::FanSpinStatus, u8);
-    fetch_register!(drive_fail_status, Registers::DriveFailStatus, u8);
-    fetch_register!(interrupt_enable, Registers::FanInterruptEnable, u8);
-    fetch_register!(pwm_polarity_config, Registers::PwmPolarityConfig, u8);
-    fetch_register!(pwm_output_config, Registers::PwmOutputConfig, u8);
-    fetch_register!(pwm_base_f45, Registers::PwmBaseF45, u8);
-    fetch_register!(pwm_base_f123, Registers::PwmBaseF123, u8);
+    fetch_register!(config, Register::Configuration, u8);
+    fetch_register!(status, Register::FanStatus, u8);
+    fetch_register!(stall_status, Register::FanStallStatus, u8);
+    fetch_register!(spin_status, Register::FanSpinStatus, u8);
+    fetch_register!(drive_fail_status, Register::DriveFailStatus, u8);
+    fetch_register!(interrupt_enable, Register::FanInterruptEnable, u8);
+    fetch_register!(pwm_polarity_config, Register::PwmPolarityConfig, u8);
+    fetch_register!(pwm_output_config, Register::PwmOutputConfig, u8);
+    fetch_register!(pwm_base_f45, Register::PwmBaseF45, u8);
+    fetch_register!(pwm_base_f123, Register::PwmBaseF123, u8);
 
     // Fan specific register access
     fetch_fan_register!(fan_setting, FAN_SETTING_OFFSET, u8);
@@ -283,9 +283,9 @@ impl<I2C: I2c> Emc230x<I2C> {
     fetch_fan_register!(tach_read_low_byte, TACH_READ_LOW_BYTE_OFFSET, u8);
 
     // Chip registers
-    fetch_register!(software_lock, Registers::SoftwareLock, u8);
-    fetch_register!(product_features, Registers::ProductFeatures, u8);
-    fetch_register!(product_id, Registers::ProductId, ProductId);
+    fetch_register!(software_lock, Register::SoftwareLock, u8);
+    fetch_register!(product_features, Register::ProductFeatures, u8);
+    fetch_register!(product_id, Register::ProductId, ProductId);
 }
 
 #[cfg(test)]
