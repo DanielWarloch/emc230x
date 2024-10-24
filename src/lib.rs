@@ -40,12 +40,19 @@ macro_rules! fetch_register {
 }
 
 /// Fetch a register from the device which applies to a specific fan
-macro_rules! fetch_fan_register {
-    ($func:ident, $offset:expr, $return_type:ty) => {
-        pub async fn $func(&mut self, sel: FanSelect) -> Result<$return_type, Error> {
+macro_rules! fan_register {
+    ($get:ident, $set:ident, $offset:expr, $reg_type:ty) => {
+        pub async fn $get(&mut self, sel: FanSelect) -> Result<$reg_type, Error> {
             self.valid_fan(sel)?;
             let reg = fan_register_address(sel, $offset)?;
             self.read_register(reg).await
+        }
+
+        pub async fn $set(&mut self, sel: FanSelect, value: $reg_type) -> Result<(), Error> {
+            self.valid_fan(sel)?;
+            let reg = fan_register_address(sel, $offset)?;
+            self.write_register(reg, value).await?;
+            Ok(())
         }
     };
 }
@@ -117,7 +124,7 @@ pub async fn dump_info<I2C: I2c>(dev: &mut Emc230x<I2C>) -> Result<(), Error> {
         defmt_info_fan_register!(dev, tach_target_low_byte, fan);
         defmt_info_fan_register!(dev, tach_target_high_byte, fan);
         defmt_info_fan_register!(dev, tach_reading_high_byte, fan);
-        defmt_info_fan_register!(dev, tach_read_low_byte, fan);
+        defmt_info_fan_register!(dev, tach_reading_low_byte, fan);
     }
 
     Ok(())
@@ -248,7 +255,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     pub fn rpm<'a>(&'a mut self, sel: FanSelect) -> impl Future<Output = Result<u64, Error>> + 'a {
         async move {
             self.valid_fan(sel)?;
-            let raw_low = self.tach_read_low_byte(sel).await?;
+            let raw_low = self.tach_reading_low_byte(sel).await?;
             let raw_high = self.tach_reading_high_byte(sel).await?;
             let raw = u16::from_le_bytes([raw_low, raw_high]) >> 3;
 
@@ -351,33 +358,76 @@ impl<I2C: I2c> Emc230x<I2C> {
     fetch_register!(pwm_base_f123, Register::PwmBaseF123, u8);
 
     // Fan specific register access
-    fetch_fan_register!(fan_setting, FAN_SETTING_OFFSET, u8);
-    set_fan_register!(set_fan_setting, FAN_SETTING_OFFSET);
-    fetch_fan_register!(pwm_divide, PWM_DIVIDE_OFFSET, u8);
-    fetch_fan_register!(fan_configuration1, FAN_CONFIGURATION1_OFFSET, u8);
-    set_fan_register!(set_fan_configuration1, FAN_CONFIGURATION1_OFFSET);
-    fetch_fan_register!(fan_configuration2, FAN_CONFIGURATION2_OFFSET, u8);
-    fetch_fan_register!(gain, GAIN_OFFSET, u8);
-    fetch_fan_register!(spin_up_configuration, FAN_SPIN_UP_CONFIGURATION_OFFSET, u8);
-    fetch_fan_register!(max_step, FAN_MAX_STEP_OFFSET, u8);
-    fetch_fan_register!(minimum_drive, FAN_MINIMUM_DRIVE_OFFSET, u8);
-    fetch_fan_register!(valid_tach_count, FAN_VALID_TACH_COUNT_OFFSET, u8);
-    fetch_fan_register!(
+    fan_register!(fan_setting, set_fan_setting, FAN_SETTING_OFFSET, u8);
+    fan_register!(pwm_divide, set_pwm_divide, PWM_DIVIDE_OFFSET, u8);
+    fan_register!(
+        fan_configuration1,
+        set_fan_configuration1,
+        FAN_CONFIGURATION1_OFFSET,
+        u8
+    );
+    fan_register!(
+        fan_configuration2,
+        set_fan_configuration2,
+        FAN_CONFIGURATION2_OFFSET,
+        u8
+    );
+    fan_register!(gain, set_gain, GAIN_OFFSET, u8);
+    fan_register!(
+        spin_up_configuration,
+        set_spin_up_configuration,
+        FAN_SPIN_UP_CONFIGURATION_OFFSET,
+        u8
+    );
+    fan_register!(max_step, set_max_step, FAN_MAX_STEP_OFFSET, u8);
+    fan_register!(
+        minimum_drive,
+        set_minimum_drive,
+        FAN_MINIMUM_DRIVE_OFFSET,
+        u8
+    );
+    fan_register!(
+        valid_tach_count,
+        set_valid_tach_count,
+        FAN_VALID_TACH_COUNT_OFFSET,
+        u8
+    );
+    fan_register!(
         drive_fail_band_low_byte,
+        set_drive_fail_band_low_byte,
         FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET,
         u8
     );
-    fetch_fan_register!(
+    fan_register!(
         drive_fail_band_high_byte,
+        set_drive_fail_band_high_byte,
         FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET,
         u8
     );
-    fetch_fan_register!(tach_target_low_byte, TACH_TARGET_LOW_BYTE_OFFSET, u8);
-    set_fan_register!(set_tach_target_low_byte, TACH_TARGET_LOW_BYTE_OFFSET);
-    fetch_fan_register!(tach_target_high_byte, TACH_TARGET_HIGH_BYTE_OFFSET, u8);
-    set_fan_register!(set_tach_target_high_byte, TACH_TARGET_HIGH_BYTE_OFFSET);
-    fetch_fan_register!(tach_reading_high_byte, TACH_READING_HIGH_BYTE_OFFSET, u8);
-    fetch_fan_register!(tach_read_low_byte, TACH_READ_LOW_BYTE_OFFSET, u8);
+    fan_register!(
+        tach_target_low_byte,
+        set_tach_target_low_byte,
+        TACH_TARGET_LOW_BYTE_OFFSET,
+        u8
+    );
+    fan_register!(
+        tach_target_high_byte,
+        set_tach_target_high_byte,
+        TACH_TARGET_HIGH_BYTE_OFFSET,
+        u8
+    );
+    fan_register!(
+        tach_reading_high_byte,
+        set_tach_reading_high_byte,
+        TACH_READING_HIGH_BYTE_OFFSET,
+        u8
+    );
+    fan_register!(
+        tach_reading_low_byte,
+        set_tach_reading_low_byte,
+        TACH_READ_LOW_BYTE_OFFSET,
+        u8
+    );
 
     // Chip registers
     fetch_register!(software_lock, Register::SoftwareLock, u8);
