@@ -19,7 +19,7 @@ struct FanSetting {
 #[derive(Clone, Copy, Debug)]
 pub enum FanControl {
     Direct(u8),
-    Speed(u8),
+    Speed(u16),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -189,19 +189,110 @@ impl<I2C: I2c> Emc230x<I2C> {
         async { todo!() }
     }
 
-    fn set_mode(&mut self, sel: FanSelect, mode: FanControl) -> Result<(), Error> {
-        self.valid_fan(sel)?;
-        match mode {
-            FanControl::Direct(_duty) => {
-                let set_value = _duty * (100 / 255);
-                // let result = self.
-                todo!()
-                // self.set_direct(duty).await
+    /// Set the mode of the fan
+    pub fn set_mode<'a>(
+        &'a mut self,
+        sel: FanSelect,
+        mode: FanControl,
+    ) -> impl Future<Output = Result<(), Error>> + 'a {
+        async move {
+            self.valid_fan(sel)?;
+            match mode {
+                FanControl::Direct(duty) => {
+                    self.set_duty_cycle(sel, duty).await?;
+                }
+                FanControl::Speed(rpm) => {
+                    self.set_rpm(sel, rpm).await?;
+
+                    let mut config = self.fan_configuration1(sel).await?;
+                    config |= 0x80;
+                    self.set_fan_configuration1(sel, config).await?;
+                }
             }
-            FanControl::Speed(_rpm) => {
-                todo!()
-                // self.set_speed(rpm).await
-            }
+
+            Ok(())
+        }
+    }
+
+    /// Fetch the current duty cycle of the fan
+    pub fn duty_cycle<'a>(
+        &'a mut self,
+        sel: FanSelect,
+    ) -> impl Future<Output = Result<u8, Error>> + 'a {
+        async move {
+            self.valid_fan(sel)?;
+            let raw = self.fan_setting(sel).await?;
+            let duty = (raw as f64 / 255.0) * 100.0;
+            let duty = hacky_round(duty);
+            Ok(duty)
+        }
+    }
+
+    /// Set the duty cycle of the fan
+    pub fn set_duty_cycle<'a>(
+        &'a mut self,
+        sel: FanSelect,
+        duty: u8,
+    ) -> impl Future<Output = Result<(), Error>> + 'a {
+        async move {
+            let raw = (duty as f64 / 100.0) * 255.0;
+            let raw = hacky_round(raw);
+
+            defmt::warn!("Setting fan to {}% (register: {:#04x})", duty, raw);
+            self.set_fan_setting(sel, raw).await?;
+            Ok(())
+        }
+    }
+
+    /// Fetch the current RPM of the fan
+    pub fn rpm<'a>(&'a mut self, sel: FanSelect) -> impl Future<Output = Result<u64, Error>> + 'a {
+        async move {
+            self.valid_fan(sel)?;
+            let raw_low = self.tach_read_low_byte(sel).await?;
+            let raw_high = self.tach_reading_high_byte(sel).await?;
+            let raw = u16::from_le_bytes([raw_low, raw_high]) >> 3;
+
+            let poles = 2.0;
+            let n = 5.0;
+            let m = 1.0;
+            let f_tach = 32768.0;
+
+            let rpm = ((1.0 / poles) * (n - 1.0)) / (raw as f64 * (1.0 / m) as f64)
+                * f_tach as f64
+                * 60.0;
+            Ok(rpm as u64)
+        }
+    }
+
+    /// Set the target RPM of the fan
+    pub fn set_rpm<'a>(
+        &'a mut self,
+        sel: FanSelect,
+        rpm: u16,
+    ) -> impl Future<Output = Result<(), Error>> + 'a {
+        async move {
+            self.valid_fan(sel)?;
+
+            let poles = 2.0;
+            let n = 5.0;
+            let m = 1.0;
+            let f_tach = 32768.0;
+
+            let raw = (((1.0 / poles) * (n - 1.0)) / (rpm as f64 * (1.0 / m) as f64)
+                * f_tach as f64
+                * 60.0) as u16;
+            // let raw = (3932160.0 * m / rpm as f64) as u16;
+            let count = (raw << 3).to_le_bytes();
+
+            self.set_tach_target_low_byte(sel, count[0]).await?;
+            self.set_tach_target_high_byte(sel, count[1]).await?;
+            defmt::warn!(
+                "Setting RPM to {} (register: {:#04x}, {:#04x})",
+                rpm,
+                raw,
+                count
+            );
+            Ok(())
         }
     }
 
