@@ -246,8 +246,10 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     // Fan specific register access
     fetch_fan_register!(fan_setting, FAN_SETTING_OFFSET, u8);
+    set_fan_register!(set_fan_setting, FAN_SETTING_OFFSET);
     fetch_fan_register!(pwm_divide, PWM_DIVIDE_OFFSET, u8);
     fetch_fan_register!(fan_configuration1, FAN_CONFIGURATION1_OFFSET, u8);
+    set_fan_register!(set_fan_configuration1, FAN_CONFIGURATION1_OFFSET);
     fetch_fan_register!(fan_configuration2, FAN_CONFIGURATION2_OFFSET, u8);
     fetch_fan_register!(gain, GAIN_OFFSET, u8);
     fetch_fan_register!(spin_up_configuration, FAN_SPIN_UP_CONFIGURATION_OFFSET, u8);
@@ -265,7 +267,9 @@ impl<I2C: I2c> Emc230x<I2C> {
         u8
     );
     fetch_fan_register!(tach_target_low_byte, TACH_TARGET_LOW_BYTE_OFFSET, u8);
+    set_fan_register!(set_tach_target_low_byte, TACH_TARGET_LOW_BYTE_OFFSET);
     fetch_fan_register!(tach_target_high_byte, TACH_TARGET_HIGH_BYTE_OFFSET, u8);
+    set_fan_register!(set_tach_target_high_byte, TACH_TARGET_HIGH_BYTE_OFFSET);
     fetch_fan_register!(tach_reading_high_byte, TACH_READING_HIGH_BYTE_OFFSET, u8);
     fetch_fan_register!(tach_read_low_byte, TACH_READ_LOW_BYTE_OFFSET, u8);
 
