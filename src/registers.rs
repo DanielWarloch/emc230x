@@ -24,6 +24,25 @@ pub(crate) const TACH_TARGET_HIGH_BYTE_OFFSET: u8 = 13;
 pub(crate) const TACH_READING_HIGH_BYTE_OFFSET: u8 = 14;
 pub(crate) const TACH_READ_LOW_BYTE_OFFSET: u8 = 15;
 
+pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<Register, Error> {
+    let base = match sel {
+        FanSelect::Fan(fan) => match fan {
+            1 => FAN1_BASE,
+            2 => FAN2_BASE,
+            3 => FAN3_BASE,
+            4 => FAN4_BASE,
+            5 => FAN5_BASE,
+            _ => return Err(Error::InvalidFan),
+        },
+    };
+
+    let reg: Register = (base + offset)
+        .try_into()
+        .map_err(|_| Error::InvalidRegister)?;
+
+    Ok(reg)
+}
+
 mod fan_configuration1 {
     use num_enum::{FromPrimitive, IntoPrimitive};
 
