@@ -14,6 +14,9 @@ pub enum Error {
 
     /// Failed to convert a raw register value into a specific type
     RegisterTypeConversion,
+
+    /// Selected fan speed out of range
+    SpeedOutOfRange,
 }
 
 impl defmt::Format for Error {
@@ -24,6 +27,7 @@ impl defmt::Format for Error {
             Error::InvalidFan => defmt::write!(f, "InvalidFan"),
             Error::InvalidRegister => defmt::write!(f, "InvalidRegister"),
             Error::RegisterTypeConversion => defmt::write!(f, "RegisterTypeConversion"),
+            Error::SpeedOutOfRange => defmt::write!(f, "SpeedOutOfRange"),
         }
     }
 }
