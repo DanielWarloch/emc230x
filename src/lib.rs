@@ -241,7 +241,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         }
     }
 
-    /// Determine if the fan number is valid
+    /// Determine if the fan number is valid by comparing it to the number of fans the device supports.
     fn valid_fan(&self, select: FanSelect) -> Result<(), Error> {
         match select {
             FanSelect::Fan(fan) => {
