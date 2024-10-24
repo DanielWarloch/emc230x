@@ -126,6 +126,18 @@ pub enum ProductId {
     Emc2301 = 0x37,
 }
 
+impl ProductId {
+    /// Number of fans the device supports based on the Product ID.
+    pub fn num_fans(&self) -> u8 {
+        match self {
+            ProductId::Emc2301 => 1,
+            ProductId::Emc2302 => 2,
+            ProductId::Emc2303 => 3,
+            ProductId::Emc2305 => 5,
+        }
+    }
+}
+
 impl defmt::Format for ProductId {
     fn format(&self, f: defmt::Formatter) {
         match self {
