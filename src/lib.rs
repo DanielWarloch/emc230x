@@ -50,6 +50,21 @@ macro_rules! fetch_fan_register {
     };
 }
 
+/// Manually hack rounding the value because `core` doesn't have `round`
+///
+/// This is a terrible practice. Is there a better way to do this?
+fn hacky_round(value: f64) -> u8 {
+    // Interpret the value as a u8 first to get an integer value
+    let raw = value as u8;
+
+    // Reinterpret the integer value as a f64 and compare it to the original value
+    if value - raw as f64 >= 0.5 {
+        raw + 1
+    } else {
+        raw
+    }
+}
+
 /// Dump all the info and registers from the EMC230x Device
 pub async fn dump_info<I2C: I2c>(dev: &mut Emc230x<I2C>) -> Result<(), Error> {
     macro_rules! defmt_info_register {
