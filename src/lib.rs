@@ -30,14 +30,11 @@ pub enum FanSelect {
 /// Fetch a register from the device which applies to all fans
 macro_rules! fetch_register {
     ($func:ident, $register:expr, $return_type:ty) => {
-        pub fn $func(&mut self) -> impl Future<Output = Result<$return_type, Error>> + '_ {
-            async {
-                Ok(self
-                    .read_register($register)
-                    .await?
-                    .try_into()
-                    .map_err(|_| Error::RegisterTypeConversion)?)
-            }
+        pub async fn $func(&mut self) -> Result<$return_type, Error> {
+            self.read_register($register)
+                .await?
+                .try_into()
+                .map_err(|_| Error::RegisterTypeConversion)
         }
     };
 }
@@ -45,29 +42,10 @@ macro_rules! fetch_register {
 /// Fetch a register from the device which applies to a specific fan
 macro_rules! fetch_fan_register {
     ($func:ident, $offset:expr, $return_type:ty) => {
-        pub fn $func(
-            &mut self,
-            sel: FanSelect,
-        ) -> impl Future<Output = Result<$return_type, Error>> + '_ {
-            async move {
-                self.valid_fan(sel)?;
-                let base = match sel {
-                    FanSelect::Fan(fan) => match fan {
-                        1 => FAN1_BASE,
-                        2 => FAN2_BASE,
-                        3 => FAN3_BASE,
-                        4 => FAN4_BASE,
-                        5 => FAN5_BASE,
-                        _ => return Err(Error::InvalidFan),
-                    },
-                };
-
-                let reg: Register = (base + $offset)
-                    .try_into()
-                    .map_err(|_| Error::InvalidRegister)?;
-
-                Ok(self.read_register(reg).await?)
-            }
+        pub async fn $func(&mut self, sel: FanSelect) -> Result<$return_type, Error> {
+            self.valid_fan(sel)?;
+            let reg = fan_register_address(sel, $offset)?;
+            self.read_register(reg).await
         }
     };
 }
