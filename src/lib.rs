@@ -237,15 +237,10 @@ impl<I2C: I2c> Emc230x<I2C> {
         self.valid_fan(sel)?;
         let raw_low = self.tach_reading_low_byte(sel).await?;
         let raw_high = self.tach_reading_high_byte(sel).await?;
+
         let raw = u16::from_le_bytes([raw_low, raw_high]) >> 3;
+        let rpm = self.calc_raw_rpm(raw);
 
-        let poles = 2.0;
-        let n = 5.0;
-        let m = 1.0;
-        let f_tach = 32768.0;
-
-        let rpm =
-            ((1.0 / poles) * (n - 1.0)) / (raw as f64 * (1.0 / m) as f64) * f_tach as f64 * 60.0;
         Ok(rpm as u64)
     }
 
@@ -253,15 +248,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     pub async fn set_rpm(&mut self, sel: FanSelect, rpm: u16) -> Result<(), Error> {
         self.valid_fan(sel)?;
 
-        let poles = 2.0;
-        let n = 5.0;
-        let m = 1.0;
-        let f_tach = 32768.0;
-
-        let raw = (((1.0 / poles) * (n - 1.0)) / (rpm as f64 * (1.0 / m) as f64)
-            * f_tach as f64
-            * 60.0) as u16;
-        // let raw = (3932160.0 * m / rpm as f64) as u16;
+        let raw = self.calc_raw_rpm(rpm);
         let count = (raw << 3).to_le_bytes();
 
         self.set_tach_target_low_byte(sel, count[0]).await?;
@@ -273,6 +260,17 @@ impl<I2C: I2c> Emc230x<I2C> {
             count
         );
         Ok(())
+    }
+
+    /// Calculate either the RPM or raw value of the RPM based on the input value.
+    fn calc_raw_rpm(&self, value: u16) -> u16 {
+        let poles = 2.0;
+        let n = 5.0;
+        let m = 1.0;
+        let f_tach = 32768.0;
+        let _simplified = 3_932_160.0;
+
+        (((1.0 / poles) * (n - 1.0)) / (value as f64 * (1.0 / m)) * f_tach * 60.0) as u16
     }
 
     /// Write a value to a register on the device
