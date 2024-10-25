@@ -24,7 +24,7 @@ pub enum FanSelect {
 }
 
 /// Fetch a register from the device which applies to all fans
-macro_rules! fetch_register {
+macro_rules! register {
     ($func:ident, $register:expr, $return_type:ty) => {
         pub async fn $func(&mut self) -> Result<$return_type, Error> {
             self.read_register($register)
@@ -300,16 +300,16 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     // General register access
-    fetch_register!(config, Register::Configuration, u8);
-    fetch_register!(status, Register::FanStatus, u8);
-    fetch_register!(stall_status, Register::FanStallStatus, u8);
-    fetch_register!(spin_status, Register::FanSpinStatus, u8);
-    fetch_register!(drive_fail_status, Register::DriveFailStatus, u8);
-    fetch_register!(interrupt_enable, Register::FanInterruptEnable, u8);
-    fetch_register!(pwm_polarity_config, Register::PwmPolarityConfig, u8);
-    fetch_register!(pwm_output_config, Register::PwmOutputConfig, u8);
-    fetch_register!(pwm_base_f45, Register::PwmBaseF45, u8);
-    fetch_register!(pwm_base_f123, Register::PwmBaseF123, u8);
+    register!(config, Register::Configuration, u8);
+    register!(status, Register::FanStatus, u8);
+    register!(stall_status, Register::FanStallStatus, u8);
+    register!(spin_status, Register::FanSpinStatus, u8);
+    register!(drive_fail_status, Register::DriveFailStatus, u8);
+    register!(interrupt_enable, Register::FanInterruptEnable, u8);
+    register!(pwm_polarity_config, Register::PwmPolarityConfig, u8);
+    register!(pwm_output_config, Register::PwmOutputConfig, u8);
+    register!(pwm_base_f45, Register::PwmBaseF45, u8);
+    register!(pwm_base_f123, Register::PwmBaseF123, u8);
 
     // Fan specific register access
     fan_register!(fan_setting, set_fan_setting, FAN_SETTING_OFFSET, u8);
@@ -384,9 +384,9 @@ impl<I2C: I2c> Emc230x<I2C> {
     );
 
     // Chip registers
-    fetch_register!(software_lock, Register::SoftwareLock, u8);
-    fetch_register!(product_features, Register::ProductFeatures, u8);
-    fetch_register!(product_id, Register::ProductId, ProductId);
+    register!(software_lock, Register::SoftwareLock, u8);
+    register!(product_features, Register::ProductFeatures, u8);
+    register!(product_id, Register::ProductId, ProductId);
 }
 
 #[cfg(test)]
