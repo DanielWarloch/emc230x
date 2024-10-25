@@ -10,7 +10,6 @@ pub(crate) const FAN5_BASE: u8 = 0x70;
 
 pub(crate) const FAN_SETTING_OFFSET: u8 = 0;
 pub(crate) const PWM_DIVIDE_OFFSET: u8 = 1;
-pub(crate) const FAN_CONFIGURATION1_OFFSET: u8 = 2;
 pub(crate) const FAN_CONFIGURATION2_OFFSET: u8 = 3;
 pub(crate) const GAIN_OFFSET: u8 = 5;
 pub(crate) const FAN_SPIN_UP_CONFIGURATION_OFFSET: u8 = 6;
@@ -43,12 +42,13 @@ pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<Registe
     Ok(reg)
 }
 
-mod fan_configuration1 {
+pub(crate) mod fan_configuration1 {
     use num_enum::{FromPrimitive, IntoPrimitive};
 
     bitfield::bitfield! {
         pub struct FanConfiguration1(u8);
         impl Debug;
+
         /// Closed loop algorithm control
         ///
         /// 1: Closed loop algorithm is enabled. Changes to Fan Setting register are ignored.
@@ -72,6 +72,18 @@ mod fan_configuration1 {
         /// to provide a cleaner transition of the actual fan operation as the desired
         /// fan speed changes.
         pub udtx, set_udtx: 2, 0;
+    }
+
+    impl From<FanConfiguration1> for u8 {
+        fn from(fan_config: FanConfiguration1) -> u8 {
+            fan_config.0
+        }
+    }
+
+    impl From<u8> for FanConfiguration1 {
+        fn from(val: u8) -> FanConfiguration1 {
+            FanConfiguration1(val)
+        }
     }
 
     pub(crate) const OFFSET: u8 = 2;

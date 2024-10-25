@@ -40,13 +40,14 @@ macro_rules! fan_register {
         pub async fn $get(&mut self, sel: FanSelect) -> Result<$reg_type, Error> {
             self.valid_fan(sel)?;
             let reg = fan_register_address(sel, $offset)?;
-            self.read_register(reg).await
+            let value = self.read_register(reg).await?;
+            Ok(value.into())
         }
 
         pub async fn $set(&mut self, sel: FanSelect, value: $reg_type) -> Result<(), Error> {
             self.valid_fan(sel)?;
             let reg = fan_register_address(sel, $offset)?;
-            self.write_register(reg, value).await?;
+            self.write_register(reg, value.into()).await?;
             Ok(())
         }
     };
@@ -72,14 +73,14 @@ pub async fn dump_info<I2C: I2c>(dev: &mut Emc230x<I2C>) -> Result<(), Error> {
     macro_rules! defmt_info_register {
         ($dev:expr, $reg:tt) => {
             let value = $dev.$reg().await?;
-            defmt::info!("{}: {:#04x}", stringify!($reg), value);
+            defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
         };
     }
 
     macro_rules! defmt_info_fan_register {
         ($dev:expr, $reg:tt, $fan:expr) => {
             let value = $dev.$reg(FanSelect::Fan($fan)).await?;
-            defmt::info!("{}: {:#04x}", stringify!($reg), value);
+            defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
         };
     }
 
@@ -200,7 +201,7 @@ impl<I2C: I2c> Emc230x<I2C> {
                 self.set_rpm(sel, rpm).await?;
 
                 let mut config = self.fan_configuration1(sel).await?;
-                config |= 0x80;
+                config.set_enagx(true);
                 self.set_fan_configuration1(sel, config).await?;
             }
         }
@@ -317,8 +318,8 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         fan_configuration1,
         set_fan_configuration1,
-        FAN_CONFIGURATION1_OFFSET,
-        u8
+        fan_configuration1::OFFSET,
+        fan_configuration1::FanConfiguration1
     );
     fan_register!(
         fan_configuration2,
