@@ -109,29 +109,29 @@ mod fan_configuration1 {
     #[derive(Clone, Copy, Debug, FromPrimitive, IntoPrimitive)]
     #[repr(u8)]
     pub enum Edges {
-        Sample3Edges = 0b00,
+        Sample3 = 0b00,
         #[default]
-        Sample5Edges = 0b01,
-        Sample7Edges = 0b10,
-        Sample9Edges = 0b11,
+        Sample5 = 0b01,
+        Sample7 = 0b10,
+        Sample9 = 0b11,
     }
 
     impl Edges {
         pub fn poles(&self) -> u8 {
             match self {
-                Edges::Sample9Edges => 4,
-                Edges::Sample7Edges => 3,
-                Edges::Sample5Edges => 2,
-                Edges::Sample3Edges => 1,
+                Edges::Sample9 => 4,
+                Edges::Sample7 => 3,
+                Edges::Sample5 => 2,
+                Edges::Sample3 => 1,
             }
         }
 
         pub fn tach_multiplier(&self) -> f64 {
             match self {
-                Edges::Sample9Edges => 2.0,
-                Edges::Sample7Edges => 1.5,
-                Edges::Sample5Edges => 1.0,
-                Edges::Sample3Edges => 0.5,
+                Edges::Sample9 => 2.0,
+                Edges::Sample7 => 1.5,
+                Edges::Sample5 => 1.0,
+                Edges::Sample3 => 0.5,
             }
         }
     }
