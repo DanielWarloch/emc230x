@@ -12,11 +12,6 @@ mod registers;
 use registers::*;
 
 #[derive(Clone, Copy, Debug)]
-struct FanSetting {
-    enable: bool,
-}
-
-#[derive(Clone, Copy, Debug)]
 pub enum FanControl {
     Direct(u8),
     Speed(u16),
