@@ -14,7 +14,6 @@ pub(crate) const FAN_CONFIGURATION2_OFFSET: u8 = 3;
 pub(crate) const GAIN_OFFSET: u8 = 5;
 pub(crate) const FAN_SPIN_UP_CONFIGURATION_OFFSET: u8 = 6;
 pub(crate) const FAN_MAX_STEP_OFFSET: u8 = 7;
-pub(crate) const FAN_MINIMUM_DRIVE_OFFSET: u8 = 8;
 pub(crate) const FAN_VALID_TACH_COUNT_OFFSET: u8 = 9;
 pub(crate) const FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET: u8 = 10;
 pub(crate) const FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET: u8 = 11;
@@ -178,7 +177,49 @@ pub(crate) mod fan_configuration1 {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
+pub(crate) mod fan_min_drive {
+    use bitfield::bitfield;
+    use crate::hacky_round;
+
+    bitfield! {
+        pub struct FanMinimumDrive(u8);
+        impl Debug;
+
+        /// Minimum Drive
+        ///
+        /// The minimum PWM duty cycle that the device will output to the fan.
+        pub min_drive, set_min_drive: 7, 0;
+    }
+
+    impl FanMinimumDrive {
+        pub fn duty_cycle(&self) -> u8 {
+            let duty = (self.0 as f64 / 255.0) * 100.0;
+            hacky_round(duty)
+        }
+
+        pub fn from_duty_cycle(duty: u8) -> Self {
+            let raw = (duty as f64 / 100.0) * 255.0;
+            let raw = hacky_round(raw);
+            FanMinimumDrive(raw as u8)
+        }
+    }
+
+    impl From<FanMinimumDrive> for u8 {
+        fn from(fan_min_drive: FanMinimumDrive) -> u8 {
+            fan_min_drive.0
+        }
+    }
+
+    impl From<u8> for FanMinimumDrive {
+        fn from(val: u8) -> FanMinimumDrive {
+            FanMinimumDrive(val)
+        }
+    }
+
+    pub(crate) const OFFSET: u8 = 8;
+}
+
+#[derive(Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum Register {
     Configuration = 0x20,

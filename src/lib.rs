@@ -3,6 +3,7 @@
 use core::future::Future;
 
 use embedded_hal_async as hal;
+use fan_min_drive::FanMinimumDrive;
 use hal::i2c::I2c;
 
 mod error;
@@ -56,7 +57,7 @@ macro_rules! fan_register {
 /// Manually hack rounding the value because `core` doesn't have `round`
 ///
 /// This is a terrible practice. Is there a better way to do this?
-fn hacky_round(value: f64) -> u8 {
+pub(crate) fn hacky_round(value: f64) -> u8 {
     // Interpret the value as a u8 first to get an integer value
     let raw = value as u8;
 
@@ -241,6 +242,21 @@ impl<I2C: I2c> Emc230x<I2C> {
         Ok(())
     }
 
+    /// Minimum configured duty cycle the fan will run at.
+    pub async fn min_duty(&mut self, sel: FanSelect) -> Result<u8, Error> {
+        self.valid_fan(sel)?;
+        let drive = self.minimum_drive(sel).await?;
+        Ok(drive.duty_cycle())
+    }
+
+    /// Set the minimum duty cycle the fan will run at.
+    pub async fn set_min_duty(&mut self, sel: FanSelect, duty: u8) -> Result<(), Error> {
+        self.valid_fan(sel)?;
+        let drive = FanMinimumDrive::from(duty);
+        self.set_minimum_drive(sel, drive).await?;
+        Ok(())
+    }
+
     /// Calculate either the RPM or raw value of the RPM based on the input value.
     fn calc_raw_rpm(&self, value: u16) -> u16 {
         let poles = 2.0;
@@ -321,8 +337,8 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         minimum_drive,
         set_minimum_drive,
-        FAN_MINIMUM_DRIVE_OFFSET,
-        u8
+        fan_min_drive::OFFSET,
+        fan_min_drive::FanMinimumDrive
     );
     fan_register!(
         valid_tach_count,
