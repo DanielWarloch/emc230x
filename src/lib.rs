@@ -133,47 +133,30 @@ pub struct Emc230x<I2C> {
     /// I2C address of the device
     address: u8,
 
-    /// Number of fans the device supports
-    count: u8,
+    /// Device Product Identifier
+    pid: ProductId,
 }
 
 impl<I2C: I2c> Emc230x<I2C> {
     /// Probe the I2C bus for an EMC230x device at the specified address
     pub async fn probe(i2c: I2C, address: u8) -> Result<Self, Error> {
         let mut i2c = i2c;
-        let id = &mut [0];
+        let pid = &mut [0];
 
         // Manually setup the read to the ProductId register because the structure isn't formed yet
-        i2c.write_read(address, &[Register::ProductId as u8], id)
+        i2c.write_read(address, &[Register::ProductId as u8], pid)
             .await
             .map_err(|_| Error::I2c)?;
 
-        let id: ProductId = id[0]
+        let pid: ProductId = pid[0]
             .try_into()
             .map_err(|_| Error::RegisterTypeConversion)?;
 
-        match id {
-            ProductId::Emc2301 => Ok(Self {
-                i2c,
-                address,
-                count: 1,
-            }),
-            ProductId::Emc2302 => Ok(Self {
-                i2c,
-                address,
-                count: 2,
-            }),
-            ProductId::Emc2303 => Ok(Self {
-                i2c,
-                address,
-                count: 3,
-            }),
-            ProductId::Emc2305 => Ok(Self {
-                i2c,
-                address,
-                count: 5,
-            }),
-        }
+        Ok(Self {
+            i2c,
+            address,
+            pid,
+        })
     }
 
     /// Get the I2C address of the device
@@ -183,7 +166,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     /// Get the number of fans the device supports
     fn count(&self) -> u8 {
-        self.count
+        self.pid.num_fans()
     }
 
     fn mode(&mut self, sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
