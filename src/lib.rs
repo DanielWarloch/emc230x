@@ -156,7 +156,7 @@ impl<I2C: I2c> Emc230x<I2C> {
             .try_into()
             .map_err(|_| Error::RegisterTypeConversion)?;
 
-        match id.into() {
+        match id {
             ProductId::Emc2301 => Ok(Self {
                 i2c,
                 address,
