@@ -23,14 +23,30 @@ pub enum FanSelect {
     Fan(u8),
 }
 
-/// Fetch a register from the device which applies to all fans
-macro_rules! register {
-    ($func:ident, $register:expr, $return_type:ty) => {
-        pub async fn $func(&mut self) -> Result<$return_type, Error> {
+macro_rules! register_ro {
+    ($get:ident, $register:expr, $return_type:ty) => {
+        pub async fn $get(&mut self) -> Result<$return_type, Error> {
             self.read_register($register)
                 .await?
                 .try_into()
                 .map_err(|_| Error::RegisterTypeConversion)
+        }
+    };
+}
+
+/// Fetch a register from the device which applies to all fans
+macro_rules! register {
+    ($get:ident, $set:ident, $register:expr, $return_type:ty) => {
+        pub async fn $get(&mut self) -> Result<$return_type, Error> {
+            self.read_register($register)
+                .await?
+                .try_into()
+                .map_err(|_| Error::RegisterTypeConversion)
+        }
+
+        pub async fn $set(&mut self, value: $return_type) -> Result<(), Error> {
+            self.write_register($register, value.into()).await?;
+            Ok(())
         }
     };
 }
@@ -273,42 +289,46 @@ impl<I2C: I2c> Emc230x<I2C> {
     // General register access
     register!(
         config,
+        set_config,
         Register::Configuration,
         configuration::Configuration
     );
-    register!(status, Register::FanStatus, fan_status::FanStatus);
-    register!(
+    register_ro!(status, Register::FanStatus, fan_status::FanStatus);
+    register_ro!(
         stall_status,
         Register::FanStallStatus,
         fan_stall_status::FanStallStatus
     );
-    register!(
+    register_ro!(
         spin_status,
         Register::FanSpinStatus,
         fan_spin_status::FanSpinStatus
     );
-    register!(
+    register_ro!(
         drive_fail_status,
         Register::DriveFailStatus,
         fan_drive_fail_status::FanDriveFailStatus
     );
     register!(
         interrupt_enable,
+        set_interrupt_enable,
         Register::FanInterruptEnable,
         fan_interrupt_enable::FanInterruptEnable
     );
     register!(
         pwm_polarity_config,
+        set_pwm_polarity_config,
         Register::PwmPolarityConfig,
         pwm_polarity_config::PwmPolarityConfig
     );
     register!(
         pwm_output_config,
+        set_pwm_output_config,
         Register::PwmOutputConfig,
         pwm_output_config::PwmOutputConfig
     );
-    register!(pwm_base_f45, Register::PwmBaseF45, u8);
-    register!(pwm_base_f123, Register::PwmBaseF123, u8);
+    register!(pwm_base_f45, set_pwm_base_f45, Register::PwmBaseF45, u8);
+    register!(pwm_base_f123, set_pwm_base_f123, Register::PwmBaseF123, u8);
 
     // Fan specific register access
     fan_register!(fan_setting, set_fan_setting, FAN_SETTING_OFFSET, u8);
@@ -383,9 +403,9 @@ impl<I2C: I2c> Emc230x<I2C> {
     );
 
     // Chip registers
-    register!(software_lock, Register::SoftwareLock, u8);
-    register!(product_features, Register::ProductFeatures, u8);
-    register!(product_id, Register::ProductId, ProductId);
+    register_ro!(software_lock, Register::SoftwareLock, u8);
+    register_ro!(product_features, Register::ProductFeatures, u8);
+    register_ro!(product_id, Register::ProductId, ProductId);
 
     /// Dump all the info and registers from the EMC230x Device
     pub async fn dump_info(&mut self) -> Result<(), Error> {
