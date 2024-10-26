@@ -204,7 +204,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         Self::TACH_FREQUENCY
     }
 
-    fn mode(&mut self, sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
+    fn _mode(&mut self, _sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
         async { todo!() }
     }
 
