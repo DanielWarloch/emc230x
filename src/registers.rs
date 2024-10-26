@@ -44,6 +44,8 @@ pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<Registe
 pub(crate) mod fan_configuration1 {
     use num_enum::{FromPrimitive, IntoPrimitive};
 
+    pub(crate) const OFFSET: u8 = 2;
+
     bitfield::bitfield! {
         pub struct FanConfiguration1(u8);
         impl Debug;
@@ -84,8 +86,6 @@ pub(crate) mod fan_configuration1 {
             FanConfiguration1(val)
         }
     }
-
-    pub(crate) const OFFSET: u8 = 2;
 
     #[derive(Clone, Copy, Debug, FromPrimitive, IntoPrimitive)]
     #[repr(u8)]
@@ -190,6 +190,8 @@ pub(crate) mod fan_min_drive {
     use bitfield::bitfield;
     use crate::hacky_round;
 
+    pub(crate) const OFFSET: u8 = 8;
+
     bitfield! {
         pub struct FanMinimumDrive(u8);
         impl Debug;
@@ -224,8 +226,6 @@ pub(crate) mod fan_min_drive {
             FanMinimumDrive(val)
         }
     }
-
-    pub(crate) const OFFSET: u8 = 8;
 }
 
 #[derive(Clone, Copy, IntoPrimitive, TryFromPrimitive)]
