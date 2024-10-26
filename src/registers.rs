@@ -271,7 +271,7 @@ pub(crate) mod fan_min_drive {
         pub fn from_duty_cycle(duty: u8) -> Self {
             let raw = (duty as f64 / 100.0) * 255.0;
             let raw = hacky_round(raw);
-            FanMinimumDrive(raw as u8)
+            FanMinimumDrive(raw)
         }
     }
 
