@@ -329,7 +329,11 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     // General register access
-    register!(config, Register::Configuration, u8);
+    register!(
+        config,
+        Register::Configuration,
+        configuration::Configuration
+    );
     register!(status, Register::FanStatus, u8);
     register!(stall_status, Register::FanStallStatus, u8);
     register!(spin_status, Register::FanSpinStatus, u8);

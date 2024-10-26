@@ -2,6 +2,22 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::{Error, FanSelect};
 
+macro_rules! basic_from_and_into {
+    ($name:ident, $ty:ty) => {
+        impl From<$name> for $ty {
+            fn from(val: $name) -> $ty {
+                val.0
+            }
+        }
+
+        impl From<$ty> for $name {
+            fn from(val: $ty) -> $name {
+                $name(val)
+            }
+        }
+    };
+}
+
 pub(crate) const FAN1_BASE: u8 = 0x30;
 pub(crate) const FAN2_BASE: u8 = 0x40;
 pub(crate) const FAN3_BASE: u8 = 0x50;
@@ -41,6 +57,60 @@ pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<Registe
     Ok(reg)
 }
 
+pub(crate) mod configuration {
+    bitfield::bitfield! {
+        /// The Configuration register controls the basic functionality of the device.
+        /// The Configuration regsister is software locked.
+        #[derive(Clone, Copy)]
+        pub struct Configuration(u8);
+        impl Debug;
+
+        /// Blocks the !ALERT pin from asserting.
+        ///
+        /// 0: Alert functionality is enabled. If any bit in the status register is
+        ///    set, the !ALERT pin will be asserted.
+        ///
+        /// 1: Alert functionality is disabled.
+        pub mask, set_mask: 7;
+
+        /// Disable SMBus Time-Out function.
+        ///
+        /// 0: SMBus Time-Out function is enabled.
+        ///
+        /// 1: SMBus Time-Out function is disabled. The device will be fully I2C compliant.
+        pub dis_to, set_dis_to: 6;
+
+        /// Enable the Watchdog Timer.
+        ///
+        /// 0: Watchdog Timer is disabled. Runs once on power-up and then is disabled.
+        ///
+        /// 1: Watchdog Timer operates continuously.
+        pub wd_en, set_wd_en: 5;
+
+        /// Tachometer Clock Direction
+        ///
+        /// Allows the internal tachometer clock to be driven out of the CLK pin so that
+        /// multiple devices can be synchronized to the same source.
+        ///
+        /// 0: The CLK pin acts as a clock input.
+        ///
+        /// 1: The CLK pin acts as a clock output (push-pull).
+        pub dreck, set_dreck: 1;
+
+        /// Tachometer Clock Selection
+        ///
+        /// Enables the device to use the CLK pin as the tachometer clock. If DRECK is set,
+        /// this bit is ignored and the device will use the internal oscillator.
+        ///
+        /// 0: The device uses the internal oscillator.
+        ///
+        /// 1: The device uses the CLK pin as the tachometer clock.
+        pub useck, set_useck: 0;
+    }
+
+    basic_from_and_into!(Configuration, u8);
+}
+
 pub(crate) mod fan_configuration1 {
     use num_enum::{FromPrimitive, IntoPrimitive};
 
@@ -75,17 +145,7 @@ pub(crate) mod fan_configuration1 {
         pub u8, from into UpdateTime, udtx, set_udtx: 2, 0;
     }
 
-    impl From<FanConfiguration1> for u8 {
-        fn from(fan_config: FanConfiguration1) -> u8 {
-            fan_config.0
-        }
-    }
-
-    impl From<u8> for FanConfiguration1 {
-        fn from(val: u8) -> FanConfiguration1 {
-            FanConfiguration1(val)
-        }
-    }
+    basic_from_and_into!(FanConfiguration1, u8);
 
     #[derive(Clone, Copy, Debug, FromPrimitive, IntoPrimitive)]
     #[repr(u8)]
