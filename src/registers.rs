@@ -70,7 +70,7 @@ pub(crate) mod fan_configuration1 {
         /// the Fan Step register, is used to control the ramp rate of the drive response
         /// to provide a cleaner transition of the actual fan operation as the desired
         /// fan speed changes.
-        pub udtx, set_udtx: 2, 0;
+        pub u8, from into UpdateTime, udtx, set_udtx: 2, 0;
     }
 
     impl From<FanConfiguration1> for u8 {
