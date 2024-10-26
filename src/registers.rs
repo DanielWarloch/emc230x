@@ -187,8 +187,8 @@ pub(crate) mod fan_configuration1 {
 }
 
 pub(crate) mod fan_min_drive {
-    use bitfield::bitfield;
     use crate::hacky_round;
+    use bitfield::bitfield;
 
     pub(crate) const OFFSET: u8 = 8;
 
