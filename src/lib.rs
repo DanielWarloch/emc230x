@@ -297,7 +297,11 @@ impl<I2C: I2c> Emc230x<I2C> {
         Register::FanInterruptEnable,
         fan_interrupt_enable::FanInterruptEnable
     );
-    register!(pwm_polarity_config, Register::PwmPolarityConfig, u8);
+    register!(
+        pwm_polarity_config,
+        Register::PwmPolarityConfig,
+        pwm_polarity_config::PwmPolarityConfig
+    );
     register!(pwm_output_config, Register::PwmOutputConfig, u8);
     register!(pwm_base_f45, Register::PwmBaseF45, u8);
     register!(pwm_base_f123, Register::PwmBaseF123, u8);
