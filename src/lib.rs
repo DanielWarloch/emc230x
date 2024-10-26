@@ -69,64 +69,6 @@ pub(crate) fn hacky_round(value: f64) -> u8 {
     }
 }
 
-/// Dump all the info and registers from the EMC230x Device
-pub async fn dump_info<I2C: I2c>(dev: &mut Emc230x<I2C>) -> Result<(), Error> {
-    macro_rules! defmt_info_register {
-        ($dev:expr, $reg:tt) => {
-            let value = $dev.$reg().await?;
-            defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
-        };
-    }
-
-    macro_rules! defmt_info_fan_register {
-        ($dev:expr, $reg:tt, $fan:expr) => {
-            let value = $dev.$reg(FanSelect::Fan($fan)).await?;
-            defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
-        };
-    }
-
-    let count = dev.count();
-
-    defmt::info!("Address: {:#04x}", dev.address());
-    defmt::info!("Fan Count: {}", count);
-
-    defmt_info_register!(dev, software_lock);
-    defmt_info_register!(dev, product_features);
-    defmt_info_register!(dev, product_id);
-
-    defmt_info_register!(dev, config);
-    defmt_info_register!(dev, status);
-    defmt_info_register!(dev, stall_status);
-    defmt_info_register!(dev, spin_status);
-    defmt_info_register!(dev, drive_fail_status);
-    defmt_info_register!(dev, interrupt_enable);
-    defmt_info_register!(dev, pwm_polarity_config);
-    defmt_info_register!(dev, pwm_output_config);
-    defmt_info_register!(dev, pwm_base_f45);
-    defmt_info_register!(dev, pwm_base_f123);
-
-    for fan in 1..=count {
-        defmt::info!("Fan: {} ----------------------", fan);
-        defmt_info_fan_register!(dev, fan_setting, fan);
-        defmt_info_fan_register!(dev, pwm_divide, fan);
-        defmt_info_fan_register!(dev, fan_configuration1, fan);
-        defmt_info_fan_register!(dev, fan_configuration2, fan);
-        defmt_info_fan_register!(dev, gain, fan);
-        defmt_info_fan_register!(dev, spin_up_configuration, fan);
-        defmt_info_fan_register!(dev, max_step, fan);
-        defmt_info_fan_register!(dev, minimum_drive, fan);
-        defmt_info_fan_register!(dev, valid_tach_count, fan);
-        defmt_info_fan_register!(dev, drive_fail_band_low_byte, fan);
-        defmt_info_fan_register!(dev, drive_fail_band_high_byte, fan);
-        defmt_info_fan_register!(dev, tach_target_low_byte, fan);
-        defmt_info_fan_register!(dev, tach_target_high_byte, fan);
-        defmt_info_fan_register!(dev, tach_reading_high_byte, fan);
-        defmt_info_fan_register!(dev, tach_reading_low_byte, fan);
-    }
-
-    Ok(())
-}
-
 pub struct Emc230x<I2C> {
     /// I2C bus
     i2c: I2C,
@@ -420,4 +362,62 @@ impl<I2C: I2c> Emc230x<I2C> {
     register!(software_lock, Register::SoftwareLock, u8);
     register!(product_features, Register::ProductFeatures, u8);
     register!(product_id, Register::ProductId, ProductId);
+
+    /// Dump all the info and registers from the EMC230x Device
+    pub async fn dump_info(&mut self) -> Result<(), Error> {
+        macro_rules! defmt_info_register {
+            ($dev:expr, $reg:tt) => {
+                let value = $dev.$reg().await?;
+                defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
+            };
+        }
+
+        macro_rules! defmt_info_fan_register {
+            ($dev:expr, $reg:tt, $fan:expr) => {
+                let value = $dev.$reg(FanSelect::Fan($fan)).await?;
+                defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
+            };
+        }
+
+        let count = self.count();
+
+        defmt::info!("Address: {:#04x}", self.address());
+        defmt::info!("Fan Count: {}", count);
+
+        defmt_info_register!(self, software_lock);
+        defmt_info_register!(self, product_features);
+        defmt_info_register!(self, product_id);
+
+        defmt_info_register!(self, config);
+        defmt_info_register!(self, status);
+        defmt_info_register!(self, stall_status);
+        defmt_info_register!(self, spin_status);
+        defmt_info_register!(self, drive_fail_status);
+        defmt_info_register!(self, interrupt_enable);
+        defmt_info_register!(self, pwm_polarity_config);
+        defmt_info_register!(self, pwm_output_config);
+        defmt_info_register!(self, pwm_base_f45);
+        defmt_info_register!(self, pwm_base_f123);
+
+        for fan in 1..=count {
+            defmt::info!("Fan: {} ----------------------", fan);
+            defmt_info_fan_register!(self, fan_setting, fan);
+            defmt_info_fan_register!(self, pwm_divide, fan);
+            defmt_info_fan_register!(self, fan_configuration1, fan);
+            defmt_info_fan_register!(self, fan_configuration2, fan);
+            defmt_info_fan_register!(self, gain, fan);
+            defmt_info_fan_register!(self, spin_up_configuration, fan);
+            defmt_info_fan_register!(self, max_step, fan);
+            defmt_info_fan_register!(self, minimum_drive, fan);
+            defmt_info_fan_register!(self, valid_tach_count, fan);
+            defmt_info_fan_register!(self, drive_fail_band_low_byte, fan);
+            defmt_info_fan_register!(self, drive_fail_band_high_byte, fan);
+            defmt_info_fan_register!(self, tach_target_low_byte, fan);
+            defmt_info_fan_register!(self, tach_target_high_byte, fan);
+            defmt_info_fan_register!(self, tach_reading_high_byte, fan);
+            defmt_info_fan_register!(self, tach_reading_low_byte, fan);
+        }
+
+        Ok(())
+    }
 }
