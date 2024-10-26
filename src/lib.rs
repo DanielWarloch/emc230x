@@ -277,7 +277,11 @@ impl<I2C: I2c> Emc230x<I2C> {
         configuration::Configuration
     );
     register!(status, Register::FanStatus, fan_status::FanStatus);
-    register!(stall_status, Register::FanStallStatus, u8);
+    register!(
+        stall_status,
+        Register::FanStallStatus,
+        fan_stall_status::FanStallStatus
+    );
     register!(spin_status, Register::FanSpinStatus, u8);
     register!(drive_fail_status, Register::DriveFailStatus, u8);
     register!(interrupt_enable, Register::FanInterruptEnable, u8);
