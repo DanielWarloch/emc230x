@@ -14,8 +14,8 @@ use registers::*;
 
 #[derive(Clone, Copy, Debug)]
 pub enum FanControl {
-    Direct(u8),
-    Speed(u16),
+    DutyCycle(u8),
+    Rpm(u16),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -212,10 +212,10 @@ impl<I2C: I2c> Emc230x<I2C> {
     pub async fn set_mode(&mut self, sel: FanSelect, mode: FanControl) -> Result<(), Error> {
         self.valid_fan(sel)?;
         match mode {
-            FanControl::Direct(duty) => {
+            FanControl::DutyCycle(duty) => {
                 self.set_duty_cycle(sel, duty).await?;
             }
-            FanControl::Speed(rpm) => {
+            FanControl::Rpm(rpm) => {
                 self.set_rpm(sel, rpm).await?;
 
                 let mut config = self.fan_configuration1(sel).await?;
