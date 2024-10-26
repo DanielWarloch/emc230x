@@ -421,8 +421,3 @@ impl<I2C: I2c> Emc230x<I2C> {
     register!(product_features, Register::ProductFeatures, u8);
     register!(product_id, Register::ProductId, ProductId);
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}
