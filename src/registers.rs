@@ -128,6 +128,15 @@ pub(crate) mod fan_configuration1 {
     }
 
     impl Edges {
+        pub fn num_edges(&self) -> u8 {
+            match self {
+                Edges::Sample3 => 3,
+                Edges::Sample5 => 5,
+                Edges::Sample7 => 7,
+                Edges::Sample9 => 9,
+            }
+        }
+
         pub fn poles(&self) -> u8 {
             match self {
                 Edges::Sample9 => 4,

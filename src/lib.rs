@@ -136,9 +136,15 @@ pub struct Emc230x<I2C> {
 
     /// Device Product Identifier
     pid: ProductId,
+
+    /// Configurable number of poles in a fan. Typically 2.
+    poles: [u8; 5],
 }
 
 impl<I2C: I2c> Emc230x<I2C> {
+    const TACH_FREQUENCY: f64 = 32_768.0;
+    const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
+
     /// Probe the I2C bus for an EMC230x device at the specified address
     pub async fn probe(i2c: I2C, address: u8) -> Result<Self, Error> {
         let mut i2c = i2c;
@@ -153,10 +159,13 @@ impl<I2C: I2c> Emc230x<I2C> {
             .try_into()
             .map_err(|_| Error::RegisterTypeConversion)?;
 
+        // Assume 2 poles for all fans by default
+        let poles = [2, 2, 2, 2, 2];
         Ok(Self {
             i2c,
             address,
             pid,
+            poles,
         })
     }
 
@@ -168,6 +177,31 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Get the number of fans the device supports
     fn count(&self) -> u8 {
         self.pid.num_fans()
+    }
+
+    /// Get the number of poles for the selected fan (used in RPM calculations)
+    pub fn fan_poles(&self, sel: FanSelect) -> u8 {
+        match sel {
+            FanSelect::Fan(fan) => self.poles[fan as usize],
+        }
+    }
+
+    /// Set the number of poles for the selected fan (used in RPM calculations)
+    ///
+    /// It is unlikely that this value will need to change unless a non-standard fan is used.
+    /// If it does need to change, there are likely other configuration changes that need to
+    /// happen as well.
+    pub fn set_fan_poles(&mut self, sel: FanSelect, poles: u8) {
+        match sel {
+            FanSelect::Fan(fan) => {
+                self.poles[fan as usize] = poles;
+            }
+        }
+    }
+
+    /// Get the tachometer frequency of the device
+    fn tach_freq(&self) -> f64 {
+        Self::TACH_FREQUENCY
     }
 
     fn mode(&mut self, sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
@@ -219,7 +253,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         let raw_high = self.tach_reading_high_byte(sel).await?;
 
         let raw = u16::from_le_bytes([raw_low, raw_high]) >> 3;
-        let rpm = self.calc_raw_rpm(raw);
+        let rpm = self.calc_raw_rpm(sel, raw).await?;
 
         Ok(rpm as u64)
     }
@@ -228,17 +262,11 @@ impl<I2C: I2c> Emc230x<I2C> {
     pub async fn set_rpm(&mut self, sel: FanSelect, rpm: u16) -> Result<(), Error> {
         self.valid_fan(sel)?;
 
-        let raw = self.calc_raw_rpm(rpm);
+        let raw = self.calc_raw_rpm(sel, rpm).await?;
         let count = (raw << 3).to_le_bytes();
 
         self.set_tach_target_low_byte(sel, count[0]).await?;
         self.set_tach_target_high_byte(sel, count[1]).await?;
-        defmt::warn!(
-            "Setting RPM to {} (register: {:#04x}, {:#04x})",
-            rpm,
-            raw,
-            count
-        );
         Ok(())
     }
 
@@ -252,20 +280,21 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Set the minimum duty cycle the fan will run at.
     pub async fn set_min_duty(&mut self, sel: FanSelect, duty: u8) -> Result<(), Error> {
         self.valid_fan(sel)?;
-        let drive = FanMinimumDrive::from(duty);
+        let drive = FanMinimumDrive::from_duty_cycle(duty);
         self.set_minimum_drive(sel, drive).await?;
         Ok(())
     }
 
     /// Calculate either the RPM or raw value of the RPM based on the input value.
-    fn calc_raw_rpm(&self, value: u16) -> u16 {
-        let poles = 2.0;
-        let n = 5.0;
-        let m = 1.0;
-        let f_tach = 32768.0;
-        let _simplified = 3_932_160.0;
+    async fn calc_raw_rpm(&mut self, sel: FanSelect, value: u16) -> Result<u16, Error> {
+        let cfg = self.fan_configuration1(sel).await?;
 
-        (((1.0 / poles) * (n - 1.0)) / (value as f64 * (1.0 / m)) * f_tach * 60.0) as u16
+        let poles = self.fan_poles(sel) as f64;
+        let n = cfg.edgx().num_edges() as f64;
+        let m = cfg.rngx().tach_count_multiplier() as f64;
+        let f_tach = self.tach_freq();
+
+        Ok((((1.0 / poles) * (n - 1.0)) / (value as f64 * (1.0 / m)) * f_tach * 60.0) as u16)
     }
 
     /// Write a value to a register on the device
