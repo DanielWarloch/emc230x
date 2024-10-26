@@ -119,12 +119,32 @@ impl<I2C: I2c> Emc230x<I2C> {
 
         // Assume 2 poles for all fans by default
         let poles = [2, 2, 2, 2, 2];
-        Ok(Self {
+
+        // Form the device so that some defaults can be set
+        let mut dev = Self {
             i2c,
             address,
             pid,
             poles,
-        })
+        };
+
+        // Set all fan outputs to push-pull to avoid waveform distortion
+        let mut output_cfg = pwm_output_config::PwmOutputConfig::default();
+        let count = dev.count();
+        for fan in 1..=count {
+            output_cfg.push_pull(fan);
+        }
+        dev.set_pwm_output_config(output_cfg).await?;
+
+        // Set RPM range to 500 RPM for all drives to capture slower fans
+        for fan in 1..=count {
+            let mut cfg = dev.fan_configuration1(FanSelect::Fan(fan)).await?;
+            cfg.set_rngx(fan_configuration1::Range::Rpm500);
+            dev.set_fan_configuration1(FanSelect::Fan(fan), cfg).await?;
+        }
+
+        // Device is configured
+        Ok(dev)
     }
 
     /// Get the I2C address of the device
