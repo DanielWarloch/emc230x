@@ -167,6 +167,7 @@ pub(crate) mod fan_configuration1 {
     pub(crate) const OFFSET: u8 = 2;
 
     bitfield::bitfield! {
+        #[derive(Clone, Copy)]
         pub struct FanConfiguration1(u8);
         impl Debug;
 
