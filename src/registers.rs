@@ -463,17 +463,7 @@ pub(crate) mod fan_min_drive {
         }
     }
 
-    impl From<FanMinimumDrive> for u8 {
-        fn from(fan_min_drive: FanMinimumDrive) -> u8 {
-            fan_min_drive.0
-        }
-    }
-
-    impl From<u8> for FanMinimumDrive {
-        fn from(val: u8) -> FanMinimumDrive {
-            FanMinimumDrive(val)
-        }
-    }
+    basic_from_and_into!(FanMinimumDrive, u8);
 }
 
 #[derive(Clone, Copy, IntoPrimitive, TryFromPrimitive)]
