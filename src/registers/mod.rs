@@ -1,6 +1,17 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::{Error, FanSelect};
+pub(crate) use configuration::Configuration;
+pub(crate) use fan_configuration1::FanConfiguration1;
+pub(crate) use fan_drive_fail_status::FanDriveFailStatus;
+pub(crate) use fan_interrupt_enable::FanInterruptEnable;
+pub(crate) use fan_min_drive::FanMinimumDrive;
+pub(crate) use fan_spin_status::FanSpinStatus;
+pub(crate) use fan_stall_status::FanStallStatus;
+pub(crate) use fan_status::FanStatus;
+pub(crate) use product_id::ProductId;
+pub(crate) use pwm_output_config::PwmOutputConfig;
+pub(crate) use pwm_polarity_config::PwmPolarityConfig;
 
 macro_rules! basic_from_and_into {
     ($name:ident, $ty:ty) => {

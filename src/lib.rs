@@ -1,18 +1,14 @@
 #![cfg_attr(not(test), no_std)]
 
 use core::future::Future;
-
 use embedded_hal_async as hal;
-use fan_min_drive::FanMinimumDrive;
 use hal::i2c::I2c;
 
-mod error;
 use error::Error;
-
-mod registers;
 use registers::*;
 
-use product_id::ProductId;
+mod error;
+mod registers;
 
 #[derive(Clone, Copy, Debug)]
 pub enum FanControl {
@@ -309,45 +305,32 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     // General register access
-    register!(
-        config,
-        set_config,
-        Register::Configuration,
-        configuration::Configuration
-    );
-    register_ro!(status, Register::FanStatus, fan_status::FanStatus);
-    register_ro!(
-        stall_status,
-        Register::FanStallStatus,
-        fan_stall_status::FanStallStatus
-    );
-    register_ro!(
-        spin_status,
-        Register::FanSpinStatus,
-        fan_spin_status::FanSpinStatus
-    );
+    register!(config, set_config, Register::Configuration, Configuration);
+    register_ro!(status, Register::FanStatus, FanStatus);
+    register_ro!(stall_status, Register::FanStallStatus, FanStallStatus);
+    register_ro!(spin_status, Register::FanSpinStatus, FanSpinStatus);
     register_ro!(
         drive_fail_status,
         Register::DriveFailStatus,
-        fan_drive_fail_status::FanDriveFailStatus
+        FanDriveFailStatus
     );
     register!(
         interrupt_enable,
         set_interrupt_enable,
         Register::FanInterruptEnable,
-        fan_interrupt_enable::FanInterruptEnable
+        FanInterruptEnable
     );
     register!(
         pwm_polarity_config,
         set_pwm_polarity_config,
         Register::PwmPolarityConfig,
-        pwm_polarity_config::PwmPolarityConfig
+        PwmPolarityConfig
     );
     register!(
         pwm_output_config,
         set_pwm_output_config,
         Register::PwmOutputConfig,
-        pwm_output_config::PwmOutputConfig
+        PwmOutputConfig
     );
     register!(pwm_base_f45, set_pwm_base_f45, Register::PwmBaseF45, u8);
     register!(pwm_base_f123, set_pwm_base_f123, Register::PwmBaseF123, u8);
@@ -359,7 +342,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         fan_configuration1,
         set_fan_configuration1,
         fan_configuration1::OFFSET,
-        fan_configuration1::FanConfiguration1
+        FanConfiguration1
     );
     fan_register!(
         fan_configuration2,
@@ -379,7 +362,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         minimum_drive,
         set_minimum_drive,
         fan_min_drive::OFFSET,
-        fan_min_drive::FanMinimumDrive
+        FanMinimumDrive
     );
     fan_register!(
         valid_tach_count,
