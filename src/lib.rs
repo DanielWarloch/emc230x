@@ -12,6 +12,8 @@ use error::Error;
 mod registers;
 use registers::*;
 
+use product_id::ProductId;
+
 #[derive(Clone, Copy, Debug)]
 pub enum FanControl {
     DutyCycle(u8),
