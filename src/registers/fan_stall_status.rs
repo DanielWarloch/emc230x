@@ -1,7 +1,11 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
     /// The Fan Spin Status register indicates which fan driver has failed to spin up.
     /// All bits are Cleared upon a read if the error condition has been removed.
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x25)]
     pub struct FanStallStatus(u8);
     impl Debug;
 
@@ -40,5 +44,3 @@ bitfield::bitfield! {
     /// 1: Tachometer count has exceeded maximum valid TACH count, indicating stall.
     pub f1stl, _: 0;
 }
-
-basic_from_and_into!(FanStallStatus, u8);

@@ -341,7 +341,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         fan_configuration1,
         set_fan_configuration1,
-        fan_configuration1::OFFSET,
+        FanConfiguration1::OFFSET,
         FanConfiguration1
     );
     fan_register!(
@@ -361,7 +361,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         minimum_drive,
         set_minimum_drive,
-        fan_min_drive::OFFSET,
+        FanMinimumDrive::OFFSET,
         FanMinimumDrive
     );
     fan_register!(

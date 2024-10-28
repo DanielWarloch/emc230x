@@ -1,5 +1,9 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
-    #[derive(Clone, Copy, Default)]
+    #[derive(Clone, Copy, Default, RegisterAddress)]
+    #[register(address = 0x2B)]
     pub struct PwmOutputConfig(u8);
     impl Debug;
 
@@ -62,5 +66,3 @@ impl PwmOutputConfig {
         }
     }
 }
-
-basic_from_and_into!(PwmOutputConfig, u8);

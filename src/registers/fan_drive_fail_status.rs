@@ -1,5 +1,9 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x27)]
     pub struct FanDriveFailStatus(u8);
     impl Debug;
 
@@ -38,5 +42,3 @@ bitfield::bitfield! {
     /// 1: Fan is unable to reach the RPM with 100% PWM input.
     pub drvf1, _: 0;
 }
-
-basic_from_and_into!(FanDriveFailStatus, u8);

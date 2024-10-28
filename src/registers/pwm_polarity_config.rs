@@ -1,5 +1,9 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x2A)]
     pub struct PwmPolarityConfig(u8);
     impl Debug;
 
@@ -48,5 +52,3 @@ bitfield::bitfield! {
     ///    0% duty cycle.
     pub plrity1, set_plrity1: 0;
 }
-
-basic_from_and_into!(PwmPolarityConfig, u8);

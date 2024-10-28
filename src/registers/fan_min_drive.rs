@@ -1,9 +1,12 @@
-use crate::hacky_round;
 use bitfield::bitfield;
 
-pub(crate) const OFFSET: u8 = 8;
+use super::RegisterOffset;
+use crate::hacky_round;
+use emc230x_macros::RegisterOffset;
 
 bitfield! {
+    #[derive(Clone, Copy, RegisterOffset)]
+    #[register(offset = 0x08)]
     pub struct FanMinimumDrive(u8);
     impl Debug;
 
@@ -25,5 +28,3 @@ impl FanMinimumDrive {
         FanMinimumDrive(raw)
     }
 }
-
-basic_from_and_into!(FanMinimumDrive, u8);

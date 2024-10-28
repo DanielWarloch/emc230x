@@ -1,5 +1,9 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x26)]
     pub struct FanSpinStatus(u8);
     impl Debug;
 
@@ -38,5 +42,3 @@ bitfield::bitfield! {
     /// 1: Spin-up routine failed to start the fun.
     pub f1spin, _: 0;
 }
-
-basic_from_and_into!(FanSpinStatus, u8);

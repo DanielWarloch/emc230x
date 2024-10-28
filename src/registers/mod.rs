@@ -13,22 +13,6 @@ pub(crate) use product_id::ProductId;
 pub(crate) use pwm_output_config::PwmOutputConfig;
 pub(crate) use pwm_polarity_config::PwmPolarityConfig;
 
-macro_rules! basic_from_and_into {
-    ($name:ident, $ty:ty) => {
-        impl From<$name> for $ty {
-            fn from(val: $name) -> $ty {
-                val.0
-            }
-        }
-
-        impl From<$ty> for $name {
-            fn from(val: $ty) -> $name {
-                $name(val)
-            }
-        }
-    };
-}
-
 pub(crate) mod configuration;
 pub(crate) mod fan_configuration1;
 pub(crate) mod fan_drive_fail_status;
@@ -78,6 +62,14 @@ pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<Registe
         .map_err(|_| Error::InvalidRegister)?;
 
     Ok(reg)
+}
+
+pub(crate) trait RegisterAddress {
+    const ADDRESS: u8;
+}
+
+pub(crate) trait RegisterOffset {
+    const OFFSET: u8;
 }
 
 #[derive(Clone, Copy, IntoPrimitive, TryFromPrimitive)]

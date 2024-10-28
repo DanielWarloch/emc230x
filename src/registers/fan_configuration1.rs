@@ -1,9 +1,11 @@
 use num_enum::{FromPrimitive, IntoPrimitive};
 
-pub(crate) const OFFSET: u8 = 2;
+use super::RegisterOffset;
+use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterOffset)]
+    #[register(offset = 0x02)]
     pub struct FanConfiguration1(u8);
     impl Debug;
 
@@ -31,8 +33,6 @@ bitfield::bitfield! {
     /// fan speed changes.
     pub u8, from into UpdateTime, udtx, set_udtx: 2, 0;
 }
-
-basic_from_and_into!(FanConfiguration1, u8);
 
 #[derive(Clone, Copy, Debug, FromPrimitive, IntoPrimitive)]
 #[repr(u8)]

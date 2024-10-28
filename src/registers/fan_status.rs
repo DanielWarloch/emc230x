@@ -1,7 +1,11 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
     /// The Fan Status register indicates that the fan driver has stalled, failed, or
     /// the Watchdog Timer has expired.
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x24)]
     pub struct FanStatus(u8);
     impl Debug;
 
@@ -43,5 +47,3 @@ bitfield::bitfield! {
     /// 1: Any bit in the Fan Stall Status register is set.
     pub fnstl, _: 0;
 }
-
-basic_from_and_into!(FanStatus, u8);

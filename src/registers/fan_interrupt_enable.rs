@@ -1,5 +1,9 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x29)]
     pub struct FanInterruptEnable(u8);
     impl Debug;
 
@@ -48,5 +52,3 @@ bitfield::bitfield! {
     /// 1: Fan has an error condition.
     pub f1iten, _: 0;
 }
-
-basic_from_and_into!(FanInterruptEnable, u8);

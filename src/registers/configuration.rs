@@ -1,7 +1,11 @@
+use super::RegisterAddress;
+use emc230x_macros::RegisterAddress;
+
 bitfield::bitfield! {
     /// The Configuration register controls the basic functionality of the device.
     /// The Configuration regsister is software locked.
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x20)]
     pub struct Configuration(u8);
     impl Debug;
 
@@ -47,5 +51,3 @@ bitfield::bitfield! {
     /// 1: The device uses the CLK pin as the tachometer clock.
     pub useck, set_useck: 0;
 }
-
-basic_from_and_into!(Configuration, u8);

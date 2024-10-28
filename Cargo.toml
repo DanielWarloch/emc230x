@@ -1,3 +1,8 @@
+[workspace]
+members = [
+    "macros",
+]
+
 [package]
 name = "emc230x"
 description = "An async driver for the EMC230x family of fan controllerss"
@@ -15,3 +20,4 @@ defmt = "0.3.8"
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
 num_enum = { version = "0.7.3", default-features = false }
+emc230x-macros = { path = "./macros" }
