@@ -210,20 +210,16 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Fetch the current duty cycle of the fan
     pub async fn duty_cycle(&mut self, sel: FanSelect) -> Result<u8, Error> {
         self.valid_fan(sel)?;
-        let raw = self.fan_setting(sel).await?;
-        let duty = (raw as f64 / 255.0) * 100.0;
-        let duty = hacky_round(duty);
+        let drive = self.fan_setting(sel).await?;
+        let duty = drive.duty_cycle();
         Ok(duty)
     }
 
     /// Set the duty cycle of the fan
     pub async fn set_duty_cycle(&mut self, sel: FanSelect, duty: u8) -> Result<(), Error> {
         self.valid_fan(sel)?;
-        let raw = (duty as f64 / 100.0) * 255.0;
-        let raw = hacky_round(raw);
-
-        defmt::warn!("Setting fan to {}% (register: {:#04x})", duty, raw);
-        self.set_fan_setting(sel, raw).await?;
+        let drive = FanDriveSetting::from_duty_cycle(duty);
+        self.set_fan_setting(sel, drive).await?;
         Ok(())
     }
 
@@ -341,7 +337,12 @@ impl<I2C: I2c> Emc230x<I2C> {
     register!(pwm_base_f123, set_pwm_base_f123, Register::PwmBaseF123, u8);
 
     // Fan specific register access
-    fan_register!(fan_setting, set_fan_setting, FAN_SETTING_OFFSET, u8);
+    fan_register!(
+        fan_setting,
+        set_fan_setting,
+        FanDriveSetting::OFFSET,
+        FanDriveSetting
+    );
     fan_register!(pwm_divide, set_pwm_divide, PWM_DIVIDE_OFFSET, u8);
     fan_register!(
         fan_configuration1,
