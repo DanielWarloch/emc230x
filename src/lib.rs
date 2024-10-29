@@ -98,7 +98,7 @@ pub struct Emc230x<I2C> {
 }
 
 impl<I2C: I2c> Emc230x<I2C> {
-    const TACH_FREQUENCY: f64 = 32_768.0;
+    const TACH_FREQUENCY_HZ: f64 = 32_768.0;
     const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
 
     /// Probe the I2C bus for an EMC230x device at the specified address
@@ -181,7 +181,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     /// Get the tachometer frequency of the device
     fn tach_freq(&self) -> f64 {
-        Self::TACH_FREQUENCY
+        Self::TACH_FREQUENCY_HZ
     }
 
     fn _mode(&mut self, _sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
