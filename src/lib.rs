@@ -343,7 +343,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         FanDriveSetting::OFFSET,
         FanDriveSetting
     );
-    fan_register!(pwm_divide, set_pwm_divide, PWM_DIVIDE_OFFSET, u8);
+    fan_register!(pwm_divide, set_pwm_divide, PwmDivide::OFFSET, PwmDivide);
     fan_register!(
         fan_configuration1,
         set_fan_configuration1,

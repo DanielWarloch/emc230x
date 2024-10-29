@@ -12,6 +12,7 @@ pub(crate) use fan_stall_status::FanStallStatus;
 pub(crate) use fan_status::FanStatus;
 pub(crate) use product_id::ProductId;
 pub(crate) use pwm_base::{PwmBase123, PwmBase45};
+pub(crate) use pwm_divide::PwmDivide;
 pub(crate) use pwm_output_config::PwmOutputConfig;
 pub(crate) use pwm_polarity_config::PwmPolarityConfig;
 
@@ -26,6 +27,7 @@ pub(crate) mod fan_stall_status;
 pub(crate) mod fan_status;
 pub(crate) mod product_id;
 pub(crate) mod pwm_base;
+pub(crate) mod pwm_divide;
 pub(crate) mod pwm_output_config;
 pub(crate) mod pwm_polarity_config;
 
@@ -35,7 +37,6 @@ pub(crate) const FAN3_BASE: u8 = 0x50;
 pub(crate) const FAN4_BASE: u8 = 0x60;
 pub(crate) const FAN5_BASE: u8 = 0x70;
 
-pub(crate) const PWM_DIVIDE_OFFSET: u8 = 1;
 pub(crate) const FAN_CONFIGURATION2_OFFSET: u8 = 3;
 pub(crate) const GAIN_OFFSET: u8 = 5;
 pub(crate) const FAN_SPIN_UP_CONFIGURATION_OFFSET: u8 = 6;
