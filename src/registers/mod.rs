@@ -11,6 +11,7 @@ pub(crate) use fan_spin_status::FanSpinStatus;
 pub(crate) use fan_stall_status::FanStallStatus;
 pub(crate) use fan_status::FanStatus;
 pub(crate) use product_id::ProductId;
+pub(crate) use pwm_base::{PwmBase123, PwmBase45};
 pub(crate) use pwm_output_config::PwmOutputConfig;
 pub(crate) use pwm_polarity_config::PwmPolarityConfig;
 
@@ -24,6 +25,7 @@ pub(crate) mod fan_spin_status;
 pub(crate) mod fan_stall_status;
 pub(crate) mod fan_status;
 pub(crate) mod product_id;
+pub(crate) mod pwm_base;
 pub(crate) mod pwm_output_config;
 pub(crate) mod pwm_polarity_config;
 
