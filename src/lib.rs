@@ -356,7 +356,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         FanConfiguration2::OFFSET,
         FanConfiguration2
     );
-    fan_register!(gain, set_gain, GAIN_OFFSET, u8);
+    fan_register!(gain, set_gain, PidGain::OFFSET, PidGain);
     fan_register!(
         spin_up_configuration,
         set_spin_up_configuration,
