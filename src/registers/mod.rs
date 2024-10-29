@@ -3,6 +3,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use crate::{Error, FanSelect};
 pub(crate) use configuration::Configuration;
 pub(crate) use fan_configuration1::FanConfiguration1;
+pub(crate) use fan_configuration2::FanConfiguration2;
 pub(crate) use fan_drive_fail_status::FanDriveFailStatus;
 pub(crate) use fan_drive_setting::FanDriveSetting;
 pub(crate) use fan_interrupt_enable::FanInterruptEnable;
@@ -18,6 +19,7 @@ pub(crate) use pwm_polarity_config::PwmPolarityConfig;
 
 pub(crate) mod configuration;
 pub(crate) mod fan_configuration1;
+pub(crate) mod fan_configuration2;
 pub(crate) mod fan_drive_fail_status;
 pub(crate) mod fan_drive_setting;
 pub(crate) mod fan_interrupt_enable;
@@ -37,7 +39,6 @@ pub(crate) const FAN3_BASE: u8 = 0x50;
 pub(crate) const FAN4_BASE: u8 = 0x60;
 pub(crate) const FAN5_BASE: u8 = 0x70;
 
-pub(crate) const FAN_CONFIGURATION2_OFFSET: u8 = 3;
 pub(crate) const GAIN_OFFSET: u8 = 5;
 pub(crate) const FAN_SPIN_UP_CONFIGURATION_OFFSET: u8 = 6;
 pub(crate) const FAN_MAX_STEP_OFFSET: u8 = 7;
