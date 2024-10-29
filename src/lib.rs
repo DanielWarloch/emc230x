@@ -156,9 +156,10 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Get the number of poles for the selected fan (used in RPM calculations)
-    pub fn fan_poles(&self, sel: FanSelect) -> u8 {
+    pub fn fan_poles(&self, sel: FanSelect) -> Result<u8, Error> {
+        self.valid_fan(sel)?;
         match sel {
-            FanSelect::Fan(fan) => self.poles[fan as usize],
+            FanSelect::Fan(fan) => Ok(self.poles[fan as usize]),
         }
     }
 
@@ -167,12 +168,15 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// It is unlikely that this value will need to change unless a non-standard fan is used.
     /// If it does need to change, there are likely other configuration changes that need to
     /// happen as well.
-    pub fn set_fan_poles(&mut self, sel: FanSelect, poles: u8) {
+    pub fn set_fan_poles(&mut self, sel: FanSelect, poles: u8) -> Result<(), Error> {
+        self.valid_fan(sel)?;
         match sel {
             FanSelect::Fan(fan) => {
                 self.poles[fan as usize] = poles;
             }
         }
+
+        Ok(())
     }
 
     /// Get the tachometer frequency of the device
@@ -214,6 +218,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     /// Set the duty cycle of the fan
     pub async fn set_duty_cycle(&mut self, sel: FanSelect, duty: u8) -> Result<(), Error> {
+        self.valid_fan(sel)?;
         let raw = (duty as f64 / 100.0) * 255.0;
         let raw = hacky_round(raw);
 
@@ -265,7 +270,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     async fn calc_raw_rpm(&mut self, sel: FanSelect, value: u16) -> Result<u16, Error> {
         let cfg = self.fan_configuration1(sel).await?;
 
-        let poles = self.fan_poles(sel) as f64;
+        let poles = self.fan_poles(sel)? as f64;
         let n = cfg.edgx().num_edges() as f64;
         let m = cfg.rngx().tach_count_multiplier() as f64;
         let f_tach = self.tach_freq();
