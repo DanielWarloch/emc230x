@@ -19,6 +19,7 @@ pub(crate) use pwm_base::{PwmBase123, PwmBase45};
 pub(crate) use pwm_divide::PwmDivide;
 pub(crate) use pwm_output_config::PwmOutputConfig;
 pub(crate) use pwm_polarity_config::PwmPolarityConfig;
+pub(crate) use valid_tach_count::ValidTachCount;
 
 pub(crate) mod configuration;
 pub(crate) mod fan_configuration1;
@@ -38,6 +39,7 @@ pub(crate) mod pwm_base;
 pub(crate) mod pwm_divide;
 pub(crate) mod pwm_output_config;
 pub(crate) mod pwm_polarity_config;
+pub(crate) mod valid_tach_count;
 
 pub(crate) const FAN1_BASE: u8 = 0x30;
 pub(crate) const FAN2_BASE: u8 = 0x40;
@@ -45,7 +47,6 @@ pub(crate) const FAN3_BASE: u8 = 0x50;
 pub(crate) const FAN4_BASE: u8 = 0x60;
 pub(crate) const FAN5_BASE: u8 = 0x70;
 
-pub(crate) const FAN_VALID_TACH_COUNT_OFFSET: u8 = 9;
 pub(crate) const FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET: u8 = 10;
 pub(crate) const FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET: u8 = 11;
 pub(crate) const TACH_TARGET_LOW_BYTE_OFFSET: u8 = 12;

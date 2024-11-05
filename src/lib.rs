@@ -373,8 +373,8 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         valid_tach_count,
         set_valid_tach_count,
-        FAN_VALID_TACH_COUNT_OFFSET,
-        u8
+        ValidTachCount::OFFSET,
+        ValidTachCount
     );
     fan_register!(
         drive_fail_band_low_byte,
