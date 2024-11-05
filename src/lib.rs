@@ -360,8 +360,8 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         spin_up_configuration,
         set_spin_up_configuration,
-        FAN_SPIN_UP_CONFIGURATION_OFFSET,
-        u8
+        FanSpinUpConfig::OFFSET,
+        FanSpinUpConfig
     );
     fan_register!(max_step, set_max_step, FAN_MAX_STEP_OFFSET, u8);
     fan_register!(
