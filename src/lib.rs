@@ -379,14 +379,14 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         drive_fail_band_low_byte,
         set_drive_fail_band_low_byte,
-        FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET,
-        u8
+        DriveFailBandLow::OFFSET,
+        DriveFailBandLow
     );
     fan_register!(
         drive_fail_band_high_byte,
         set_drive_fail_band_high_byte,
-        FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET,
-        u8
+        DriveFailBandHigh::OFFSET,
+        DriveFailBandHigh
     );
     fan_register!(
         tach_target_low_byte,

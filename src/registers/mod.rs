@@ -2,6 +2,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::{Error, FanSelect};
 pub(crate) use configuration::Configuration;
+pub(crate) use drive_fail_band::{DriveFailBandHigh, DriveFailBandLow};
 pub(crate) use fan_configuration1::FanConfiguration1;
 pub(crate) use fan_configuration2::FanConfiguration2;
 pub(crate) use fan_drive_fail_status::FanDriveFailStatus;
@@ -22,6 +23,7 @@ pub(crate) use pwm_polarity_config::PwmPolarityConfig;
 pub(crate) use valid_tach_count::ValidTachCount;
 
 pub(crate) mod configuration;
+pub(crate) mod drive_fail_band;
 pub(crate) mod fan_configuration1;
 pub(crate) mod fan_configuration2;
 pub(crate) mod fan_drive_fail_status;
@@ -47,8 +49,6 @@ pub(crate) const FAN3_BASE: u8 = 0x50;
 pub(crate) const FAN4_BASE: u8 = 0x60;
 pub(crate) const FAN5_BASE: u8 = 0x70;
 
-pub(crate) const FAN_DRIVE_FAIL_BAND_LOW_BYTE_OFFSET: u8 = 10;
-pub(crate) const FAN_DRIVE_FAIL_BAND_HIGH_BYTE_OFFSET: u8 = 11;
 pub(crate) const TACH_TARGET_LOW_BYTE_OFFSET: u8 = 12;
 pub(crate) const TACH_TARGET_HIGH_BYTE_OFFSET: u8 = 13;
 pub(crate) const TACH_READING_HIGH_BYTE_OFFSET: u8 = 14;
