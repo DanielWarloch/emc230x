@@ -242,8 +242,8 @@ impl<I2C: I2c> Emc230x<I2C> {
         let raw = self.calc_raw_rpm(sel, rpm).await?;
         let count = (raw << 3).to_le_bytes();
 
-        self.set_tach_target_low_byte(sel, count[0]).await?;
-        self.set_tach_target_high_byte(sel, count[1]).await?;
+        self.set_tach_target_low_byte(sel, count[0].into()).await?;
+        self.set_tach_target_high_byte(sel, count[1].into()).await?;
         Ok(())
     }
 
@@ -391,14 +391,14 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         tach_target_low_byte,
         set_tach_target_low_byte,
-        TACH_TARGET_LOW_BYTE_OFFSET,
-        u8
+        TachTargetLow::OFFSET,
+        TachTargetLow
     );
     fan_register!(
         tach_target_high_byte,
         set_tach_target_high_byte,
-        TACH_TARGET_HIGH_BYTE_OFFSET,
-        u8
+        TachTargetHigh::OFFSET,
+        TachTargetHigh
     );
     fan_register!(
         tach_reading_high_byte,
