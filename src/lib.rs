@@ -229,7 +229,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         let raw_low = self.tach_reading_low_byte(sel).await?;
         let raw_high = self.tach_reading_high_byte(sel).await?;
 
-        let raw = u16::from_le_bytes([raw_low, raw_high]) >> 3;
+        let raw = u16::from_le_bytes([raw_low.into(), raw_high.into()]) >> 3;
         let rpm = self.calc_raw_rpm(sel, raw).await?;
 
         Ok(rpm as u64)
@@ -403,14 +403,14 @@ impl<I2C: I2c> Emc230x<I2C> {
     fan_register!(
         tach_reading_high_byte,
         set_tach_reading_high_byte,
-        TACH_READING_HIGH_BYTE_OFFSET,
-        u8
+        TachReadingHigh::OFFSET,
+        TachReadingHigh
     );
     fan_register!(
         tach_reading_low_byte,
         set_tach_reading_low_byte,
-        TACH_READ_LOW_BYTE_OFFSET,
-        u8
+        TachReadingLow::OFFSET,
+        TachReadingLow
     );
 
     // Chip registers

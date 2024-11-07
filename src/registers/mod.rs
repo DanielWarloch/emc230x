@@ -20,6 +20,7 @@ pub(crate) use pwm_base::{PwmBase123, PwmBase45};
 pub(crate) use pwm_divide::PwmDivide;
 pub(crate) use pwm_output_config::PwmOutputConfig;
 pub(crate) use pwm_polarity_config::PwmPolarityConfig;
+pub(crate) use tach_reading::{TachReadingHigh, TachReadingLow};
 pub(crate) use tach_target::{TachTargetHigh, TachTargetLow};
 pub(crate) use valid_tach_count::ValidTachCount;
 
@@ -42,6 +43,7 @@ pub(crate) mod pwm_base;
 pub(crate) mod pwm_divide;
 pub(crate) mod pwm_output_config;
 pub(crate) mod pwm_polarity_config;
+pub(crate) mod tach_reading;
 pub(crate) mod tach_target;
 pub(crate) mod valid_tach_count;
 
@@ -50,9 +52,6 @@ pub(crate) const FAN2_BASE: u8 = 0x40;
 pub(crate) const FAN3_BASE: u8 = 0x50;
 pub(crate) const FAN4_BASE: u8 = 0x60;
 pub(crate) const FAN5_BASE: u8 = 0x70;
-
-pub(crate) const TACH_READING_HIGH_BYTE_OFFSET: u8 = 14;
-pub(crate) const TACH_READ_LOW_BYTE_OFFSET: u8 = 15;
 
 pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<Register, Error> {
     let base = match sel {
