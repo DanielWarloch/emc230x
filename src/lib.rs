@@ -1,3 +1,6 @@
+//! The EMC230x device family is a fan controller with up to five independently
+//! controlled PWM fan drivers.
+
 #![cfg_attr(not(test), no_std)]
 
 use core::future::Future;
@@ -117,7 +120,7 @@ impl<I2C: I2c> Emc230x<I2C> {
             .map_err(|_| Error::RegisterTypeConversion)?;
 
         // Assume 2 poles for all fans by default
-        let poles = [2, 2, 2, 2, 2];
+        let poles = [2; 5];
 
         // Form the device so that some defaults can be set
         let mut dev = Self {
