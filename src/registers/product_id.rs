@@ -10,7 +10,7 @@ pub enum ProductId {
 }
 
 impl ProductId {
-    const ADDRESS: u8 = 0xFD;
+    pub const ADDRESS: u8 = 0xFD;
 
     /// Number of fans the device supports based on the Product ID.
     pub fn num_fans(&self) -> u8 {
