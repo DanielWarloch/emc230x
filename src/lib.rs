@@ -22,9 +22,9 @@ pub enum FanSelect {
 }
 
 macro_rules! register_ro {
-    ($get:ident, $register:expr, $return_type:ty) => {
+    ($get:ident, $return_type:ty) => {
         pub async fn $get(&mut self) -> Result<$return_type, Error> {
-            self.read_register($register)
+            self.read_register(<$return_type>::ADDRESS)
                 .await?
                 .try_into()
                 .map_err(|_| Error::RegisterTypeConversion)
@@ -34,16 +34,17 @@ macro_rules! register_ro {
 
 /// Fetch a register from the device which applies to all fans
 macro_rules! register {
-    ($get:ident, $set:ident, $register:expr, $return_type:ty) => {
+    ($get:ident, $set:ident, $return_type:ty) => {
         pub async fn $get(&mut self) -> Result<$return_type, Error> {
-            self.read_register($register)
+            self.read_register(<$return_type>::ADDRESS)
                 .await?
                 .try_into()
                 .map_err(|_| Error::RegisterTypeConversion)
         }
 
         pub async fn $set(&mut self, value: $return_type) -> Result<(), Error> {
-            self.write_register($register, value.into()).await?;
+            self.write_register(<$return_type>::ADDRESS, value.into())
+                .await?;
             Ok(())
         }
     };
@@ -51,17 +52,17 @@ macro_rules! register {
 
 /// Fetch a register from the device which applies to a specific fan
 macro_rules! fan_register {
-    ($get:ident, $set:ident, $offset:expr, $reg_type:ty) => {
+    ($get:ident, $set:ident, $reg_type:ty) => {
         pub async fn $get(&mut self, sel: FanSelect) -> Result<$reg_type, Error> {
             self.valid_fan(sel)?;
-            let reg = fan_register_address(sel, $offset)?;
+            let reg = fan_register_address(sel, <$reg_type>::OFFSET)?;
             let value = self.read_register(reg).await?;
             Ok(value.into())
         }
 
         pub async fn $set(&mut self, sel: FanSelect, value: $reg_type) -> Result<(), Error> {
             self.valid_fan(sel)?;
-            let reg = fan_register_address(sel, $offset)?;
+            let reg = fan_register_address(sel, <$reg_type>::OFFSET)?;
             self.write_register(reg, value.into()).await?;
             Ok(())
         }
@@ -107,7 +108,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         let pid = &mut [0];
 
         // Manually setup the read to the ProductId register because the structure isn't formed yet
-        i2c.write_read(address, &[Register::ProductId as u8], pid)
+        i2c.write_read(address, &[ProductId::ADDRESS], pid)
             .await
             .map_err(|_| Error::I2c)?;
 
@@ -275,18 +276,18 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Write a value to a register on the device
-    async fn write_register(&mut self, reg: Register, data: u8) -> Result<(), Error> {
+    async fn write_register(&mut self, reg: u8, data: u8) -> Result<(), Error> {
         let addr = self.address();
-        let data = [reg as u8, data];
+        let data = [reg, data];
         self.i2c.write(addr, &data).await.map_err(|_| Error::I2c)
     }
 
     /// Read a value from a register on the device
-    async fn read_register(&mut self, reg: Register) -> Result<u8, Error> {
+    async fn read_register(&mut self, reg: u8) -> Result<u8, Error> {
         let addr = self.address();
         let mut data = [0];
         self.i2c
-            .write_read(addr, &[reg as u8], data.as_mut_slice())
+            .write_read(addr, &[reg], data.as_mut_slice())
             .await
             .map_err(|_| Error::I2c)?;
         Ok(data[0])
@@ -306,117 +307,38 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     // General register access
-    register!(config, set_config, Register::Configuration, Configuration);
-    register_ro!(status, Register::FanStatus, FanStatus);
-    register_ro!(stall_status, Register::FanStallStatus, FanStallStatus);
-    register_ro!(spin_status, Register::FanSpinStatus, FanSpinStatus);
-    register_ro!(
-        drive_fail_status,
-        Register::DriveFailStatus,
-        FanDriveFailStatus
-    );
-    register!(
-        interrupt_enable,
-        set_interrupt_enable,
-        Register::FanInterruptEnable,
-        FanInterruptEnable
-    );
-    register!(
-        pwm_polarity_config,
-        set_pwm_polarity_config,
-        Register::PwmPolarityConfig,
-        PwmPolarityConfig
-    );
-    register!(
-        pwm_output_config,
-        set_pwm_output_config,
-        Register::PwmOutputConfig,
-        PwmOutputConfig
-    );
-    register!(pwm_base_f45, set_pwm_base_f45, Register::PwmBaseF45, u8);
-    register!(pwm_base_f123, set_pwm_base_f123, Register::PwmBaseF123, u8);
+    register!(config, set_config, Configuration);
+    register_ro!(status, FanStatus);
+    register_ro!(stall_status, FanStallStatus);
+    register_ro!(spin_status, FanSpinStatus);
+    register_ro!(drive_fail_status, FanDriveFailStatus);
+    register!(interrupt_enable, set_interrupt_enable, FanInterruptEnable);
+    register!(pwm_polarity_config, set_pwm_polarity_config, PwmPolarityConfig);
+    register!(pwm_output_config, set_pwm_output_config, PwmOutputConfig);
+    register!(pwm_base_f45, set_pwm_base_f45, PwmBase45);
+    register!(pwm_base_f123, set_pwm_base_f123, PwmBase123);
 
     // Fan specific register access
-    fan_register!(
-        fan_setting,
-        set_fan_setting,
-        FanDriveSetting::OFFSET,
-        FanDriveSetting
-    );
-    fan_register!(pwm_divide, set_pwm_divide, PwmDivide::OFFSET, PwmDivide);
-    fan_register!(
-        fan_configuration1,
-        set_fan_configuration1,
-        FanConfiguration1::OFFSET,
-        FanConfiguration1
-    );
-    fan_register!(
-        fan_configuration2,
-        set_fan_configuration2,
-        FanConfiguration2::OFFSET,
-        FanConfiguration2
-    );
-    fan_register!(gain, set_gain, PidGain::OFFSET, PidGain);
-    fan_register!(
-        spin_up_configuration,
-        set_spin_up_configuration,
-        FanSpinUpConfig::OFFSET,
-        FanSpinUpConfig
-    );
-    fan_register!(max_step, set_max_step, MaxStepSize::OFFSET, MaxStepSize);
-    fan_register!(
-        minimum_drive,
-        set_minimum_drive,
-        FanMinimumDrive::OFFSET,
-        FanMinimumDrive
-    );
-    fan_register!(
-        valid_tach_count,
-        set_valid_tach_count,
-        ValidTachCount::OFFSET,
-        ValidTachCount
-    );
-    fan_register!(
-        drive_fail_band_low_byte,
-        set_drive_fail_band_low_byte,
-        DriveFailBandLow::OFFSET,
-        DriveFailBandLow
-    );
-    fan_register!(
-        drive_fail_band_high_byte,
-        set_drive_fail_band_high_byte,
-        DriveFailBandHigh::OFFSET,
-        DriveFailBandHigh
-    );
-    fan_register!(
-        tach_target_low_byte,
-        set_tach_target_low_byte,
-        TachTargetLow::OFFSET,
-        TachTargetLow
-    );
-    fan_register!(
-        tach_target_high_byte,
-        set_tach_target_high_byte,
-        TachTargetHigh::OFFSET,
-        TachTargetHigh
-    );
-    fan_register!(
-        tach_reading_high_byte,
-        set_tach_reading_high_byte,
-        TachReadingHigh::OFFSET,
-        TachReadingHigh
-    );
-    fan_register!(
-        tach_reading_low_byte,
-        set_tach_reading_low_byte,
-        TachReadingLow::OFFSET,
-        TachReadingLow
-    );
+    fan_register!(fan_setting, set_fan_setting, FanDriveSetting);
+    fan_register!(pwm_divide, set_pwm_divide, PwmDivide);
+    fan_register!(fan_configuration1, set_fan_configuration1, FanConfiguration1);
+    fan_register!(fan_configuration2, set_fan_configuration2, FanConfiguration2);
+    fan_register!(gain, set_gain, PidGain);
+    fan_register!(spin_up_configuration, set_spin_up_configuration, FanSpinUpConfig);
+    fan_register!(max_step, set_max_step, MaxStepSize);
+    fan_register!(minimum_drive, set_minimum_drive, FanMinimumDrive);
+    fan_register!(valid_tach_count, set_valid_tach_count, ValidTachCount);
+    fan_register!(drive_fail_band_low_byte, set_drive_fail_band_low_byte, DriveFailBandLow);
+    fan_register!(drive_fail_band_high_byte, set_drive_fail_band_high_byte, DriveFailBandHigh);
+    fan_register!(tach_target_low_byte, set_tach_target_low_byte, TachTargetLow);
+    fan_register!(tach_target_high_byte, set_tach_target_high_byte, TachTargetHigh);
+    fan_register!(tach_reading_high_byte, set_tach_reading_high_byte, TachReadingHigh);
+    fan_register!(tach_reading_low_byte, set_tach_reading_low_byte, TachReadingLow);
 
     // Chip registers
-    register_ro!(software_lock, Register::SoftwareLock, u8);
-    register_ro!(product_features, Register::ProductFeatures, u8);
-    register_ro!(product_id, Register::ProductId, ProductId);
+    register_ro!(software_lock, SoftwareLock);
+    register_ro!(product_features, ProductFeatures);
+    register_ro!(product_id, ProductId);
 
     /// Dump all the info and registers from the EMC230x Device
     pub async fn dump_info(&mut self) -> Result<(), Error> {
