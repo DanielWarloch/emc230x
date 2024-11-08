@@ -1,21 +1,23 @@
-#[derive(Debug)]
+use thiserror::Error;
+
+#[derive(Debug, Error)]
 pub enum Error {
-    /// I2C bus error
+    #[error("I2C bus error")]
     I2c,
 
-    /// Device return invalid device identifier
+    #[error("Invalid device identifier")]
     InvalidDeviceId,
 
-    /// Invalid fan number
+    #[error("Invalid fan number")]
     InvalidFan,
 
-    /// Invalid register
+    #[error("Invalid register")]
     InvalidRegister,
 
-    /// Failed to convert a raw register value into a specific type
+    #[error("Failed to convert register value to specific type")]
     RegisterTypeConversion,
 
-    /// Selected fan speed out of range
+    #[error("Selected fan speed out of range")]
     SpeedOutOfRange,
 }
 
