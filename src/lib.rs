@@ -13,6 +13,9 @@ use registers::*;
 mod error;
 mod registers;
 
+/// Fan Control Mode
+///
+/// The fan can be controlled by either setting the duty cycle or a target RPM.
 #[derive(Clone, Copy, Debug)]
 pub enum FanControl {
     DutyCycle(u8),
@@ -24,6 +27,7 @@ pub enum FanSelect {
     Fan(u8),
 }
 
+/// Fetch a read-only register from the device
 macro_rules! register_ro {
     ($get:ident, $return_type:ty) => {
         pub async fn $get(&mut self) -> Result<$return_type, Error> {
@@ -35,7 +39,7 @@ macro_rules! register_ro {
     };
 }
 
-/// Fetch a register from the device which applies to all fans
+/// Fetch and set a register from the device which applies to all fans
 macro_rules! register {
     ($get:ident, $set:ident, $return_type:ty) => {
         pub async fn $get(&mut self) -> Result<$return_type, Error> {
@@ -53,7 +57,7 @@ macro_rules! register {
     };
 }
 
-/// Fetch a register from the device which applies to a specific fan
+/// Fetch and set a register from the device which applies to a specific fan
 macro_rules! fan_register {
     ($get:ident, $set:ident, $reg_type:ty) => {
         pub async fn $get(&mut self, sel: FanSelect) -> Result<$reg_type, Error> {
