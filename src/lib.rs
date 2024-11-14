@@ -23,9 +23,7 @@ pub enum FanControl {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum FanSelect {
-    Fan(u8),
-}
+pub struct FanSelect(pub u8);
 
 /// Fetch a read-only register from the device
 macro_rules! register_ro {
@@ -144,9 +142,9 @@ impl<I2C: I2c> Emc230x<I2C> {
 
         // Set RPM range to 500 RPM for all drives to capture slower fans
         for fan in 1..=count {
-            let mut cfg = dev.fan_configuration1(FanSelect::Fan(fan)).await?;
+            let mut cfg = dev.fan_configuration1(FanSelect(fan)).await?;
             cfg.set_rngx(fan_configuration1::Range::Rpm500);
-            dev.set_fan_configuration1(FanSelect::Fan(fan), cfg).await?;
+            dev.set_fan_configuration1(FanSelect(fan), cfg).await?;
         }
 
         // Device is configured
@@ -166,9 +164,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Get the number of poles for the selected fan (used in RPM calculations)
     pub fn fan_poles(&self, sel: FanSelect) -> Result<u8, Error> {
         self.valid_fan(sel)?;
-        match sel {
-            FanSelect::Fan(fan) => Ok(self.poles[fan as usize]),
-        }
+        Ok(self.poles[sel.0 as usize])
     }
 
     /// Set the number of poles for the selected fan (used in RPM calculations)
@@ -178,12 +174,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// happen as well.
     pub fn set_fan_poles(&mut self, sel: FanSelect, poles: u8) -> Result<(), Error> {
         self.valid_fan(sel)?;
-        match sel {
-            FanSelect::Fan(fan) => {
-                self.poles[fan as usize] = poles;
-            }
-        }
-
+        self.poles[sel.0 as usize] = poles;
         Ok(())
     }
 
@@ -302,14 +293,10 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     /// Determine if the fan number is valid by comparing it to the number of fans the device supports.
     fn valid_fan(&self, select: FanSelect) -> Result<(), Error> {
-        match select {
-            FanSelect::Fan(fan) => {
-                if fan <= self.count() && fan != 0 {
-                    Ok(())
-                } else {
-                    Err(Error::InvalidFan)
-                }
-            }
+        if select.0 <= self.count() && select.0 != 0 {
+            Ok(())
+        } else {
+            Err(Error::InvalidFan)
         }
     }
 
@@ -358,7 +345,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 
         macro_rules! defmt_info_fan_register {
             ($dev:expr, $reg:tt, $fan:expr) => {
-                let value = $dev.$reg(FanSelect::Fan($fan)).await?;
+                let value = $dev.$reg(FanSelect($fan)).await?;
                 defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
             };
         }

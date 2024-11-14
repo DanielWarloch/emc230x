@@ -56,15 +56,13 @@ pub(crate) const FAN4_BASE: u8 = 0x60;
 pub(crate) const FAN5_BASE: u8 = 0x70;
 
 pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<u8, Error> {
-    let base = match sel {
-        FanSelect::Fan(fan) => match fan {
-            1 => FAN1_BASE,
-            2 => FAN2_BASE,
-            3 => FAN3_BASE,
-            4 => FAN4_BASE,
-            5 => FAN5_BASE,
-            _ => return Err(Error::InvalidFan),
-        },
+    let base = match sel.0 {
+        1 => FAN1_BASE,
+        2 => FAN2_BASE,
+        3 => FAN3_BASE,
+        4 => FAN4_BASE,
+        5 => FAN5_BASE,
+        _ => return Err(Error::InvalidFan),
     };
 
     Ok(base + offset)
