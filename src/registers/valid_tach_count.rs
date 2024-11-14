@@ -3,7 +3,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x09)]
+    #[register(offset = 0x09, default = 0xF5)]
     pub struct ValidTachCount(u8);
     impl Debug;
 

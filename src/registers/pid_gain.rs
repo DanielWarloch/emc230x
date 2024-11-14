@@ -5,7 +5,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x05)]
+    #[register(offset = 0x05, default = 0x2A)]
     pub struct PidGain(u8);
     impl Debug;
 

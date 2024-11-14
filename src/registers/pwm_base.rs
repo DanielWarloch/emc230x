@@ -15,7 +15,7 @@ enum PwmBaseFrequencyKhz {
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x2C)]
+    #[register(address = 0x2C, default = 0x00)]
     pub struct PwmBase45(u8);
     impl Debug;
 
@@ -28,7 +28,7 @@ bitfield::bitfield! {
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x2D)]
+    #[register(address = 0x2D, default = 0x00)]
     pub struct PwmBase123(u8);
     impl Debug;
 

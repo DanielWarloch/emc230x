@@ -3,7 +3,7 @@ use emc230x_macros::RegisterAddress;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x27)]
+    #[register(address = 0x27, default = 0x00)]
     pub struct FanDriveFailStatus(u8);
     impl Debug;
 

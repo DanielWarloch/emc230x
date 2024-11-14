@@ -5,7 +5,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x06)]
+    #[register(offset = 0x06, default = 0x19)]
     pub struct FanSpinUpConfig(u8);
     impl Debug;
 

@@ -3,7 +3,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x01)]
+    #[register(offset = 0x01, default = 0x01)]
     pub struct PwmDivide(u8);
     impl Debug;
 

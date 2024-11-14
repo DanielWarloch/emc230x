@@ -3,7 +3,7 @@ use emc230x_macros::RegisterAddress;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x2A)]
+    #[register(address = 0x2A, default = 0x00)]
     pub struct PwmPolarityConfig(u8);
     impl Debug;
 

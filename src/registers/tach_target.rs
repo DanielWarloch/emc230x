@@ -2,8 +2,8 @@ use super::RegisterOffset;
 use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
-    #[derive(Clone, Copy, Default, RegisterOffset)]
-    #[register(offset = 0x0C)]
+    #[derive(Clone, Copy, RegisterOffset)]
+    #[register(offset = 0x0C, default = 0xF8)]
     pub struct TachTargetLow(u8);
     impl Debug;
 
@@ -12,8 +12,8 @@ bitfield::bitfield! {
 }
 
 bitfield::bitfield! {
-    #[derive(Clone, Copy, Default, RegisterOffset)]
-    #[register(offset = 0x0D)]
+    #[derive(Clone, Copy, RegisterOffset)]
+    #[register(offset = 0x0D, default = 0xFF)]
     pub struct TachTargetHigh(u8);
     impl Debug;
 

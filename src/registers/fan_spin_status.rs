@@ -3,7 +3,7 @@ use emc230x_macros::RegisterAddress;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x26)]
+    #[register(address = 0x26, default = 0x00)]
     pub struct FanSpinStatus(u8);
     impl Debug;
 

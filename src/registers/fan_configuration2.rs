@@ -5,7 +5,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x03)]
+    #[register(offset = 0x03, default = 0x28)]
     pub struct FanConfiguration2(u8);
     impl Debug;
 

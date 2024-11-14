@@ -2,8 +2,8 @@ use super::RegisterOffset;
 use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
-    #[derive(Clone, Copy, Default, RegisterOffset)]
-    #[register(offset = 0x0A)]
+    #[derive(Clone, Copy, RegisterOffset)]
+    #[register(offset = 0x0A, default = 0x00)]
     pub struct DriveFailBandLow(u8);
     impl Debug;
 
@@ -12,8 +12,8 @@ bitfield::bitfield! {
 }
 
 bitfield::bitfield! {
-    #[derive(Clone, Copy, Default, RegisterOffset)]
-    #[register(offset = 0x0B)]
+    #[derive(Clone, Copy, RegisterOffset)]
+    #[register(offset = 0x0B, default = 0x00)]
     pub struct DriveFailBandHigh(u8);
     impl Debug;
 

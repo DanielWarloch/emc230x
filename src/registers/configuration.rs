@@ -5,7 +5,7 @@ bitfield::bitfield! {
     /// The Configuration register controls the basic functionality of the device.
     /// The Configuration regsister is software locked.
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x20)]
+    #[register(address = 0x20, default = 0x40)]
     pub struct Configuration(u8);
     impl Debug;
 

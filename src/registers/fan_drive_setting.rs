@@ -3,7 +3,7 @@ use crate::hacky_round;
 use emc230x_macros::RegisterOffset;
 
 #[derive(Copy, Clone, Debug, RegisterOffset)]
-#[register(offset = 0x00)]
+#[register(offset = 0x00, default = 0x00)]
 pub struct FanDriveSetting(u8);
 
 impl FanDriveSetting {

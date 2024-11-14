@@ -2,8 +2,8 @@ use super::RegisterAddress;
 use emc230x_macros::RegisterAddress;
 
 bitfield::bitfield! {
-    #[derive(Clone, Copy, Default, RegisterAddress)]
-    #[register(address = 0x2B)]
+    #[derive(Clone, Copy, RegisterAddress)]
+    #[register(address = 0x2B, default = 0x00)]
     pub struct PwmOutputConfig(u8);
     impl Debug;
 

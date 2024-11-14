@@ -5,7 +5,7 @@ bitfield::bitfield! {
     /// The Fan Status register indicates that the fan driver has stalled, failed, or
     /// the Watchdog Timer has expired.
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x24)]
+    #[register(address = 0x24, default = 0x00)]
     pub struct FanStatus(u8);
     impl Debug;
 

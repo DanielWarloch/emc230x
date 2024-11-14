@@ -3,7 +3,7 @@ use emc230x_macros::RegisterAddress;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0xFC)]
+    #[register(address = 0xFC, default = 0x00)]
     pub struct ProductFeatures(u8);
     impl Debug;
 

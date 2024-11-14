@@ -6,7 +6,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x08)]
+    #[register(offset = 0x08, default = 0x66)]
     pub struct FanMinimumDrive(u8);
     impl Debug;
 

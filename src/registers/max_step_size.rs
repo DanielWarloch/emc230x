@@ -3,7 +3,7 @@ use emc230x_macros::RegisterOffset;
 
 bitfield::bitfield! {
     #[derive(Clone, Copy, RegisterOffset)]
-    #[register(offset = 0x07)]
+    #[register(offset = 0x07, default = 0x10)]
     pub struct MaxStepSize(u8);
     impl Debug;
 

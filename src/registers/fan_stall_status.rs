@@ -5,7 +5,7 @@ bitfield::bitfield! {
     /// The Fan Spin Status register indicates which fan driver has failed to spin up.
     /// All bits are Cleared upon a read if the error condition has been removed.
     #[derive(Clone, Copy, RegisterAddress)]
-    #[register(address = 0x25)]
+    #[register(address = 0x25, default = 0x00)]
     pub struct FanStallStatus(u8);
     impl Debug;
 
