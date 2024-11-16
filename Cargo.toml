@@ -3,14 +3,19 @@ members = [
     "macros",
 ]
 
-[package]
-name = "emc230x"
-description = "An async driver for the EMC230x family of fan controllerss"
-repository = "https://github.com/retroctrl/emc230x/"
-version = "0.1.0"
+[workspace.package]
+version = "0.2.0"
 edition = "2021"
 license = "MPL-2.0"
+
+[package]
+name = "emc230x"
+description = "An async driver for the EMC230x family of fan controllers"
+repository = "https://github.com/retroctrl/emc230x/"
 keywords = ["embedded", "fan", "emc230x"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,5 +25,5 @@ defmt = "0.3.8"
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
 num_enum = { version = "0.7.3", default-features = false }
-emc230x-macros = { path = "./macros" }
+emc230x-macros = { path = "./macros", version = "0.2.0" }
 thiserror = { version = "2.0.0", default-features = false }

@@ -1,7 +1,9 @@
 [package]
 name = "emc230x-macros"
-license = "MPL-2.0"
-edition = "2021"
+description = "Macros for the emc230x crate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [lib]
 proc-macro = true
