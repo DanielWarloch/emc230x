@@ -8,6 +8,9 @@ pub enum Error {
     #[error("Invalid device identifier")]
     InvalidDeviceId,
 
+    #[error("Invalid manufacturer identifier")]
+    InvalidManufacturerId,
+
     #[error("Invalid fan number")]
     InvalidFan,
 
@@ -20,6 +23,7 @@ impl defmt::Format for Error {
         match self {
             Error::I2c => defmt::write!(f, "I2c"),
             Error::InvalidDeviceId => defmt::write!(f, "InvalidDeviceId"),
+            Error::InvalidManufacturerId => defmt::write!(f, "InvalidManufacturerId"),
             Error::InvalidFan => defmt::write!(f, "InvalidFan"),
             Error::RegisterTypeConversion => defmt::write!(f, "RegisterTypeConversion"),
         }

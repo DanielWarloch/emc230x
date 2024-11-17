@@ -100,22 +100,25 @@ pub struct Emc230x<I2C> {
 }
 
 impl<I2C: I2c> Emc230x<I2C> {
+    const MANUFACTURER_ID: u8 = 0x5D;
     const TACH_FREQUENCY_HZ: f64 = 32_768.0;
     const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
 
-    /// Probe the I2C bus for an EMC230x device at the specified address
-    pub async fn probe(i2c: I2C, address: u8) -> Result<Self, Error> {
+    // Determine if the device at the specified address is an EMC230x device
+    async fn is_emc230x(i2c: &mut I2C, address: u8) -> Result<ProductId, Error> {
+        let mfg_id: ManufacturerId  = Self::raw_read(i2c, address, ManufacturerId::ADDRESS).await?;
+        if mfg_id.mfg_id() == Self::MANUFACTURER_ID {
+            let pid: ProductId = Self::raw_read(i2c, address, ProductId::ADDRESS).await?;
+            Ok(pid)
+        } else {
+            Err(Error::InvalidManufacturerId)
+        }
+    }
+
+    /// Initialize a new EMC230x device at the specified address
+    pub async fn new(i2c: I2C, address: u8) -> Result<Self, Error> {
         let mut i2c = i2c;
-        let pid = &mut [0];
-
-        // Manually setup the read to the ProductId register because the structure isn't formed yet
-        i2c.write_read(address, &[ProductId::ADDRESS], pid)
-            .await
-            .map_err(|_| Error::I2c)?;
-
-        let pid: ProductId = pid[0]
-            .try_into()
-            .map_err(|_| Error::RegisterTypeConversion)?;
+        let pid = Self::is_emc230x(&mut i2c, address).await?;
 
         // Assume 2 poles for all fans by default
         let poles = [2; 5];

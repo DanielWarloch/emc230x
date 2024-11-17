@@ -72,6 +72,12 @@ pub(crate) fn fan_register_address(sel: FanSelect, offset: u8) -> Result<u8, Err
 #[register(address = 0xFE, default = 0x5D)]
 pub struct ManufacturerId(u8);
 
+impl ManufacturerId {
+    pub fn mfg_id(&self) -> u8 {
+        self.0
+    }
+}
+
 #[derive(Clone, Copy, Debug, emc230x_macros::RegisterAddress)]
 #[register(address = 0xFF, default = 0x80)]
 pub struct SiliconRevision(u8);
