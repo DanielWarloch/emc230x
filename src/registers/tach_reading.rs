@@ -8,7 +8,7 @@ bitfield::bitfield! {
     impl Debug;
 
     /// Tach Reading Low Byte
-    pub fxtt, set_fxtt: 7, 3;
+    pub fxtr, set_fxtr: 7, 3;
 }
 
 bitfield::bitfield! {
@@ -18,7 +18,7 @@ bitfield::bitfield! {
     impl Debug;
 
     /// Tach Reading High Byte
-    pub fxtt, set_fxtt: 7, 0;
+    pub fxtr, set_fxtr: 7, 0;
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -45,10 +45,10 @@ impl From<TachReading> for (TachReadingLow, TachReadingHigh) {
 impl From<u16> for TachReading {
     fn from(val: u16) -> Self {
         let mut low = TachReadingLow::default();
-        low.set_fxtt((val & 0x1F) as u8);
+        low.set_fxtr((val & 0x1F) as u8);
 
         let mut high = TachReadingHigh::default();
-        high.set_fxtt(((val & 0x3FE0) >> 5_u8) as u8);
+        high.set_fxtr(((val & 0x3FE0) >> 5_u8) as u8);
 
         Self { low, high }
     }
@@ -56,8 +56,8 @@ impl From<u16> for TachReading {
 
 impl From<TachReading> for u16 {
     fn from(val: TachReading) -> Self {
-        let low = val.low.fxtt() as u16;
-        let high = val.high.fxtt() as u16;
+        let low = val.low.fxtr() as u16;
+        let high = val.high.fxtr() as u16;
         (high << 5_u16) | low
     }
 }
