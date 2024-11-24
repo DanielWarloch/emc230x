@@ -22,6 +22,8 @@ jobs:
       run: cargo clippy --all-targets --all-features -- -D warnings
     - name: Install targets
       run: rustup target add thumbv7em-none-eabihf && rustup target add thumbv6m-none-eabi
+    - name: Test
+      run: cargo test
     - name: Build (x86_64)
       run: cargo build --verbose
     - name: Build (thumbv7em-none-eabihf)
