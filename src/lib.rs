@@ -3,7 +3,10 @@
 
 #![cfg_attr(not(test), no_std)]
 
-use core::future::Future;
+use core::{
+    fmt::{self, Debug, Formatter},
+    future::Future,
+};
 use embedded_hal_async as hal;
 use hal::i2c::I2c;
 
@@ -99,6 +102,16 @@ pub struct Emc230x<I2C> {
     poles: [u8; 5],
 }
 
+impl<I2C> Debug for Emc230x<I2C> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Emc230x")
+            .field("address", &self.address)
+            .field("pid", &self.pid)
+            .field("poles", &self.poles)
+            .finish()
+    }
+}
+
 impl<I2C: I2c> Emc230x<I2C> {
     const MANUFACTURER_ID: u8 = 0x5D;
     const TACH_FREQUENCY_HZ: f64 = 32_768.0;
@@ -106,7 +119,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     // Determine if the device at the specified address is an EMC230x device
     async fn is_emc230x(i2c: &mut I2C, address: u8) -> Result<ProductId, Error> {
-        let mfg_id: ManufacturerId  = Self::raw_read(i2c, address, ManufacturerId::ADDRESS).await?;
+        let mfg_id: ManufacturerId = Self::raw_read(i2c, address, ManufacturerId::ADDRESS).await?;
         if mfg_id.mfg_id() == Self::MANUFACTURER_ID {
             let pid: ProductId = Self::raw_read(i2c, address, ProductId::ADDRESS).await?;
             Ok(pid)
