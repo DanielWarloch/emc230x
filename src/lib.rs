@@ -73,7 +73,7 @@ macro_rules! fan_register {
     };
 }
 
-/// Manually hack rounding the value because `core` doesn't have `round`
+/// Manually hack rounding the value because [`core`] doesn't have `round`
 ///
 /// This is a terrible practice. Is there a better way to do this?
 pub(crate) fn hacky_round(value: f64) -> u8 {
@@ -96,6 +96,8 @@ pub struct Emc230x<I2C> {
     address: u8,
 
     /// Device Product Identifier
+    ///
+    /// The product identification will determine the number of fans the device supports.
     pid: ProductId,
 
     /// Configurable number of poles in a fan. Typically 2.
@@ -133,7 +135,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         let mut i2c = i2c;
         let pid = Self::is_emc230x(&mut i2c, address).await?;
 
-        // Assume 2 poles for all fans by default
+        // Assume 2 poles for all fans by default. This is common for most fans and is a safe default.
         let poles = [2; 5];
 
         // Form the device so that some defaults can be set
