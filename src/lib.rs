@@ -16,6 +16,14 @@ use registers::*;
 mod error;
 mod registers;
 
+/// Default I2C address for the EMC2301 device
+pub const EMC2301_I2C_ADDR: u8 = 0b0010_1111;
+
+/// Simplified RPM factor for calculating RPM from raw values
+///
+/// See Equation 4-3, page 17 of the datasheet. ((SIMPLIFIED_RPM_FACTOR * m) / COUNT)
+const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
+
 /// Fan Control Mode
 ///
 /// The fan can be controlled by either setting the duty cycle or a target RPM.
@@ -88,6 +96,21 @@ pub(crate) fn hacky_round(value: f64) -> u8 {
     }
 }
 
+/// Manually hack rounding the value because [`core`] doesn't have `round`
+///
+/// This is a terrible practice. Is there a better way to do this?
+pub(crate) fn hacky_round_u16(value: f64) -> u16 {
+    // Interpret the value as a u8 first to get an integer value
+    let raw = value as u16;
+
+    // Reinterpret the integer value as a f64 and compare it to the original value
+    if value - raw as f64 >= 0.5 {
+        raw + 1
+    } else {
+        raw
+    }
+}
+
 pub struct Emc230x<I2C> {
     /// I2C bus
     i2c: I2C,
@@ -120,11 +143,6 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     /// Tachometer measurement frequency (kHz)
     const TACH_FREQUENCY_HZ: f64 = 32_768.0;
-
-    /// Simplified RPM factor for calculating RPM from raw values
-    ///
-    /// See Equation 4-3, page 17 of the datasheet. ((SIMPLIFIED_RPM_FACTOR * m) / COUNT)
-    const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
 
     // Determine if the device at the specified address is an EMC230x device
     async fn is_emc230x(i2c: &mut I2C, address: u8) -> Result<ProductId, Error> {
@@ -291,7 +309,8 @@ impl<I2C: I2c> Emc230x<I2C> {
         let m = cfg.rngx().tach_count_multiplier() as f64;
         let f_tach = self.tach_freq();
 
-        Ok((((1.0 / poles) * (n - 1.0)) / (value as f64 * (1.0 / m)) * f_tach * 60.0) as u16)
+        let value = ((1.0 / poles) * (n - 1.0)) / (value as f64 * (1.0 / m)) * f_tach * 60.0;
+        Ok(hacky_round_u16(value))
     }
 
     /// Write a value to a register on the device
@@ -426,5 +445,187 @@ impl<I2C: I2c> Emc230x<I2C> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use embedded_hal_mock::eh1::i2c::{Mock as I2cMock, Transaction as I2cTransaction};
+
+    use crate::registers::tach_reading::TachReading;
+
+    /// Transaction expectation builder for a [`Emc230x`] device.
+    #[derive(Clone, Debug)]
+    struct Emc230xExpectationBuilder {
+        address: u8,
+        _product_id: ProductId,
+        transactions: Vec<I2cTransaction>,
+    }
+
+    impl Emc230xExpectationBuilder {
+        /// Create expectations for a mock [`Emc230x`] device that has not been initialized.
+        fn new(address: u8, pid: ProductId) -> Self {
+            let mut transactions = vec![
+                I2cTransaction::write_read(address, vec![ManufacturerId::ADDRESS], vec![0x5D]),
+                I2cTransaction::write_read(address, vec![ProductId::ADDRESS], vec![pid.into()]),
+            ];
+
+            // Set the output configuration to push-pull for all fans
+            let mut output_cfg = 0x00_u8;
+            for fan in 1..=pid.num_fans() {
+                output_cfg |= 1 << (fan - 1);
+            }
+            transactions
+                .push(I2cTransaction::write(address, vec![PwmOutputConfig::ADDRESS, output_cfg]));
+
+            for fan in 1..=pid.num_fans() {
+                transactions.push(I2cTransaction::write_read(
+                    address,
+                    vec![FanConfiguration1::fan_address(FanSelect(fan))
+                        .expect("Could not set fan address")],
+                    vec![FanConfiguration1::default().into()],
+                ));
+
+                transactions.push(I2cTransaction::write(
+                    address,
+                    vec![
+                        FanConfiguration1::fan_address(FanSelect(fan))
+                            .expect("Could not set fan address"),
+                        0x0B,
+                    ],
+                ));
+            }
+
+            Self {
+                address,
+                _product_id: pid,
+                transactions,
+            }
+        }
+
+        /// Set expectations to retrieve the duty cycle of a fan.
+        fn duty_cycle(&mut self, select: FanSelect, duty_cycle: u8) {
+            let raw = FanDriveSetting::from_duty_cycle(duty_cycle);
+
+            self.transactions.push(I2cTransaction::write_read(
+                self.address,
+                vec![FanDriveSetting::fan_address(select).expect("Could not set fan address")],
+                vec![raw.into()],
+            ));
+        }
+
+        /// Set expectations to retrieve the RPM of a fan.
+        fn rpm(&mut self, select: FanSelect, rpm: u16) {
+            let mut default_cfg = FanConfiguration1::default();
+            default_cfg.set_rngx(fan_configuration1::Range::Rpm500);
+
+            let raw = (_SIMPLIFIED_RPM_FACTOR * default_cfg.rngx().tach_count_multiplier() as f64
+                / rpm as f64) as u16;
+            let count: TachReading = TachReading::from(raw);
+
+            self.transactions.push(I2cTransaction::write_read(
+                self.address,
+                vec![TachReadingLow::fan_address(select).expect("Could not set fan address")],
+                vec![count.raw_low()],
+            ));
+
+            self.transactions.push(I2cTransaction::write_read(
+                self.address,
+                vec![TachReadingHigh::fan_address(select).expect("Could not set fan address")],
+                vec![count.raw_high()],
+            ));
+
+            self.transactions.push(I2cTransaction::write_read(
+                EMC2301_I2C_ADDR,
+                vec![FanConfiguration1::fan_address(FanSelect(1))
+                    .expect("Could not set fan address")],
+                vec![default_cfg.into()],
+            ));
+        }
+
+        fn build(self) -> Vec<I2cTransaction> {
+            self.transactions
+        }
+    }
+
+    #[tokio::test]
+    async fn new() {
+        let expectations =
+            Emc230xExpectationBuilder::new(EMC2301_I2C_ADDR, ProductId::Emc2301).build();
+
+        let i2c = I2cMock::new(&expectations);
+        let dev = crate::Emc230x::new(i2c, EMC2301_I2C_ADDR)
+            .await
+            .expect("Could not create device");
+
+        let mut i2c = dev.release();
+        i2c.done();
+    }
+
+    #[tokio::test]
+    async fn get_duty_cycle() {
+        let expected_duty_cycle = [100, 75, 50, 25, 0];
+
+        let mut expectations = Emc230xExpectationBuilder::new(EMC2301_I2C_ADDR, ProductId::Emc2301);
+
+        for value in expected_duty_cycle {
+            expectations.duty_cycle(FanSelect(1), value);
+        }
+
+        let expectations = expectations.build();
+
+        let i2c = I2cMock::new(&expectations);
+        let mut dev = crate::Emc230x::new(i2c, EMC2301_I2C_ADDR)
+            .await
+            .expect("Could not create device");
+
+        for expected in expected_duty_cycle {
+            let result = dev
+                .duty_cycle(FanSelect(1))
+                .await
+                .expect("Could not get duty cycle");
+            assert_eq!(expected, result);
+        }
+
+        let mut i2c = dev.release();
+        i2c.done();
+    }
+
+    #[tokio::test]
+    async fn get_rpm() {
+        let expected_rpm: [u16; 15_500] = core::array::from_fn(|i| (i + 500) as u16);
+        let mut expectations = Emc230xExpectationBuilder::new(EMC2301_I2C_ADDR, ProductId::Emc2301);
+
+        for value in expected_rpm {
+            expectations.rpm(FanSelect(1), value);
+        }
+
+        let expectations = expectations.build();
+
+        let i2c = I2cMock::new(&expectations);
+        let mut dev = crate::Emc230x::new(i2c, EMC2301_I2C_ADDR)
+            .await
+            .expect("Could not create device");
+
+        for expected in expected_rpm {
+            let result = dev.rpm(FanSelect(1)).await.expect("Could not get RPM");
+
+            // Allow a ±1% margin of error due to count step size varying over different settings
+            let range = std::ops::Range {
+                start: expected as f64 * 0.99,
+                end: expected as f64 * 1.01,
+            };
+            assert!(
+                range.contains(&(result as f64)),
+                "RPM was out of expected range; Expected: {} in Range: {:?} Got: {}",
+                expected,
+                range,
+                result
+            );
+        }
+
+        let mut i2c = dev.release();
+        i2c.done();
     }
 }

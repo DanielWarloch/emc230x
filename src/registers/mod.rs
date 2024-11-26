@@ -94,4 +94,16 @@ pub(crate) trait RegisterOffset {
     const FAN3_ADDRESS: u8 = FAN3_BASE + Self::OFFSET;
     const FAN4_ADDRESS: u8 = FAN4_BASE + Self::OFFSET;
     const FAN5_ADDRESS: u8 = FAN5_BASE + Self::OFFSET;
+
+    #[cfg(test)]
+    fn fan_address(select: FanSelect) -> Result<u8, Error> {
+        match select.0 {
+            1 => Ok(Self::FAN1_ADDRESS),
+            2 => Ok(Self::FAN2_ADDRESS),
+            3 => Ok(Self::FAN3_ADDRESS),
+            4 => Ok(Self::FAN4_ADDRESS),
+            5 => Ok(Self::FAN5_ADDRESS),
+            _ => Err(Error::InvalidFan),
+        }
+    }
 }
