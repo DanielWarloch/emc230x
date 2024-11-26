@@ -88,4 +88,10 @@ pub(crate) trait RegisterAddress {
 
 pub(crate) trait RegisterOffset {
     const OFFSET: u8;
+
+    const FAN1_ADDRESS: u8 = FAN1_BASE + Self::OFFSET;
+    const FAN2_ADDRESS: u8 = FAN2_BASE + Self::OFFSET;
+    const FAN3_ADDRESS: u8 = FAN3_BASE + Self::OFFSET;
+    const FAN4_ADDRESS: u8 = FAN4_BASE + Self::OFFSET;
+    const FAN5_ADDRESS: u8 = FAN5_BASE + Self::OFFSET;
 }
