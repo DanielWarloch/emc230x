@@ -324,6 +324,11 @@ impl<I2C: I2c> Emc230x<I2C> {
         }
     }
 
+    /// Release the I2C bus from the device
+    pub fn release(self) -> I2C {
+        self.i2c
+    }
+
     // General register access
     register!(config, set_config, Configuration);
     register_ro!(status, FanStatus);
