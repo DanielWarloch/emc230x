@@ -115,8 +115,15 @@ impl<I2C> Debug for Emc230x<I2C> {
 }
 
 impl<I2C: I2c> Emc230x<I2C> {
+    /// Manufacturer ID
     const MANUFACTURER_ID: u8 = 0x5D;
+
+    /// Tachometer measurement frequency (kHz)
     const TACH_FREQUENCY_HZ: f64 = 32_768.0;
+
+    /// Simplified RPM factor for calculating RPM from raw values
+    ///
+    /// See Equation 4-3, page 17 of the datasheet. ((SIMPLIFIED_RPM_FACTOR * m) / COUNT)
     const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
 
     // Determine if the device at the specified address is an EMC230x device
