@@ -628,4 +628,26 @@ mod tests {
         let mut i2c = dev.release();
         i2c.done();
     }
+
+    #[tokio::test]
+    async fn valid_fan() {
+        let expectations = Emc230xExpectationBuilder::new(EMC2301_I2C_ADDR, ProductId::Emc2301);
+        let expectations = expectations.build();
+        let i2c = I2cMock::new(&expectations);
+        let dev = Emc230x::new(i2c, EMC2301_I2C_ADDR)
+            .await
+            .expect("Could not create device");
+
+        let result = dev.valid_fan(FanSelect(1));
+        assert!(result.is_ok());
+
+        let result = dev.valid_fan(FanSelect(0));
+        assert!(result.is_err());
+
+        let result = dev.valid_fan(FanSelect(6));
+        assert!(result.is_err());
+
+        let mut i2c = dev.release();
+        i2c.done();
+    }
 }
