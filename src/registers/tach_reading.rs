@@ -22,9 +22,35 @@ bitfield::bitfield! {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct TachReading {
+pub struct TachReading {
     low: TachReadingLow,
     high: TachReadingHigh,
+}
+
+impl TachReading {
+    /// Return the logical value of the lower byte of the tachometer reading.
+    pub fn low(&self) -> u8 {
+        self.low.fxtr()
+    }
+
+    /// Return the logical value of the higher byte of the tachometer reading.
+    pub fn high(&self) -> u8 {
+        self.high.fxtr()
+    }
+
+    /// Return the raw value of the lower byte of the tachometer reading.
+    ///
+    /// This is the value that is sent over the I2C bus.
+    pub fn raw_low(&self) -> u8 {
+        self.low.0
+    }
+
+    /// Return the raw value of the higher byte of the tachometer reading.
+    ///
+    /// This is the value that is sent over the I2C bus.
+    pub fn raw_high(&self) -> u8 {
+        self.high.0
+    }
 }
 
 impl From<(TachReadingLow, TachReadingHigh)> for TachReading {
@@ -66,9 +92,13 @@ mod tests {
     #[test]
     fn tach_reading() {
         let tach_reading = super::TachReading::from(0x1FFF);
-
         assert_eq!(tach_reading.low.0, 0b1111_1000);
         assert_eq!(tach_reading.high.0, 0b1111_1111);
         assert_eq!(u16::from(tach_reading), 0x1FFF);
+
+        let tach_reading = super::TachReading::from(0x0F99);
+        assert_eq!(tach_reading.low.0, 0b1100_1000);
+        assert_eq!(tach_reading.high.0, 0b0111_1100);
+        assert_eq!(u16::from(tach_reading), 0x0F99);
     }
 }
