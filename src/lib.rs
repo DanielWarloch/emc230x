@@ -262,7 +262,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Fetch the current RPM of the fan
-    pub async fn rpm(&mut self, sel: FanSelect) -> Result<u64, Error> {
+    pub async fn rpm(&mut self, sel: FanSelect) -> Result<u16, Error> {
         self.valid_fan(sel)?;
         let raw_low = self.tach_reading_low_byte(sel).await?;
         let raw_high = self.tach_reading_high_byte(sel).await?;
@@ -270,7 +270,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         let raw = u16::from_le_bytes([raw_low.into(), raw_high.into()]) >> 3;
         let rpm = self.calc_raw_rpm(sel, raw).await?;
 
-        Ok(rpm as u64)
+        Ok(rpm)
     }
 
     /// Set the target RPM of the fan
