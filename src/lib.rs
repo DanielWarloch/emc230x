@@ -196,7 +196,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Get the number of fans the device supports
-    fn count(&self) -> u8 {
+    pub fn count(&self) -> u8 {
         self.pid.num_fans()
     }
 
