@@ -144,7 +144,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Tachometer measurement frequency (kHz)
     const TACH_FREQUENCY_HZ: f64 = 32_768.0;
 
-    // Determine if the device at the specified address is an EMC230x device
+    /// Determine if the device at the specified address is an EMC230x device
     async fn is_emc230x(i2c: &mut I2C, address: u8) -> Result<ProductId, Error> {
         let mfg_id: ManufacturerId = Self::raw_read(i2c, address, ManufacturerId::ADDRESS).await?;
         if mfg_id.mfg_id() == Self::MANUFACTURER_ID {
@@ -320,7 +320,7 @@ impl<I2C: I2c> Emc230x<I2C> {
         self.i2c.write(addr, &data).await.map_err(|_| Error::I2c)
     }
 
-    // Read a value from a register on the device attached to the I2C bus
+    /// Read a value from a register on the device attached to the I2C bus
     async fn raw_read<T: TryFrom<u8>>(i2c: &mut I2C, address: u8, reg: u8) -> Result<T, Error> {
         let mut data = [0];
         i2c.write_read(address, &[reg], data.as_mut_slice())
