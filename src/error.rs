@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Clone, Copy, Debug, Error)]
 pub enum Error {
     #[error("I2C bus error")]
     I2c,

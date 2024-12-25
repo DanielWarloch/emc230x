@@ -10,7 +10,7 @@ use core::{
 use embedded_hal_async as hal;
 use hal::i2c::I2c;
 
-use error::Error;
+pub use error::Error;
 use registers::*;
 
 mod error;
