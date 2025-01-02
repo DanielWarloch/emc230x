@@ -236,14 +236,23 @@ impl<I2C: I2c> Emc230x<I2C> {
     /// Set the mode of the fan
     pub async fn set_mode(&mut self, sel: FanSelect, mode: FanControl) -> Result<(), Error> {
         self.valid_fan(sel)?;
+        let mut config = self.fan_configuration1(sel).await?;
+
         match mode {
             FanControl::DutyCycle(duty) => {
+                // Disable RPM mode first if it is enabled.
+                //
+                // The device appears to set the fan drive with the duty cycle corresponding to the
+                // last target RPM set. If the mode bit is set after the duty cycle, the desired
+                // duty cycle gets overwritten.
+                config.set_enagx(false);
+                self.set_fan_configuration1(sel, config).await?;
+
                 self.set_duty_cycle(sel, duty).await?;
             }
             FanControl::Rpm(rpm) => {
                 self.set_rpm(sel, rpm).await?;
 
-                let mut config = self.fan_configuration1(sel).await?;
                 config.set_enagx(true);
                 self.set_fan_configuration1(sel, config).await?;
             }
