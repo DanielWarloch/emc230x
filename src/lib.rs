@@ -301,6 +301,14 @@ impl<I2C: I2c> Emc230x<I2C> {
         Ok(())
     }
 
+    /// Fetch the current duty cycle and RPM of the fan
+    pub async fn report(&mut self, sel: FanSelect) -> Result<(u8, u16), Error> {
+        self.valid_fan(sel)?;
+        let duty = self.duty_cycle(sel).await?;
+        let rpm = self.rpm(sel).await?;
+        Ok((duty, rpm))
+    }
+
     /// Minimum configured duty cycle the fan will run at.
     pub async fn min_duty(&mut self, sel: FanSelect) -> Result<u8, Error> {
         self.valid_fan(sel)?;
