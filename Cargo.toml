@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "examples/rp2040",
     "macros",
 ]
 

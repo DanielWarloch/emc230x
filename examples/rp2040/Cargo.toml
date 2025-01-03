@@ -1,0 +1,17 @@
+[package]
+name = "rp2040"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cortex-m = { version = "0.7.6" }
+cortex-m-rt = { version = "0.7.3" }
+defmt = "0.3.8"
+defmt-rtt = "0.4"
+embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy.git", features = ["defmt"] }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy.git", default-features = false, features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread"] }
+embassy-rp = { git = "https://github.com/embassy-rs/embassy.git", features = ["unstable-pac", "time-driver", "critical-section-impl", "rp2040"] }
+embassy-time = { git = "https://github.com/embassy-rs/embassy.git", features = ["defmt-timestamp-uptime"]}
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+emc230x = { path = "../.." }
