@@ -8,7 +8,13 @@
 //! The EMC230x device family is a fan controller with up to five independently
 //! controlled PWM fan drivers.
 
-#![cfg_attr(not(test), no_std)]
+#![no_std]
+
+#[cfg(any(test, feature = "std"))]
+extern crate std;
+
+#[cfg(any(test, feature = "alloc"))]
+extern crate alloc;
 
 use core::{
     fmt::{self, Debug, Formatter},
@@ -476,6 +482,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 mod tests {
     use super::*;
     use embedded_hal_mock::eh1::i2c::{Mock as I2cMock, Transaction as I2cTransaction};
+    use std::{vec, vec::Vec};
 
     use crate::registers::tach_reading::TachReading;
 
