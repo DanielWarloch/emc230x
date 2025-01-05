@@ -8,9 +8,8 @@ use embassy_rp::{
     peripherals::I2C0,
 };
 use embassy_time::Timer;
-use {defmt_rtt as _, panic_probe as _};
-
 use emc230x::{Emc230x, EMC2301_I2C_ADDR};
+use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
     I2C0_IRQ => InterruptHandler<I2C0>;
@@ -35,12 +34,10 @@ async fn main(_spawner: Spawner) {
 
     defmt::info!("EMC2301 Fan Controller Example");
 
-    defmt::info!("Setting Fan 1 to 20% minimum duty cycle");
-    emc230x
-        .set_min_duty(emc230x::FanSelect(1), 20)
-        .await
-        .unwrap();
+    // The device should start with the fans set to 100% duty cycle
+    print_fan_info(&mut emc230x).await;
 
+    // Control the fan via setting the duty cycle
     defmt::info!("Setting Fan 1 to 85% duty cycle");
     emc230x
         .set_mode(emc230x::FanSelect(1), emc230x::FanControl::DutyCycle(85))
@@ -49,6 +46,8 @@ async fn main(_spawner: Spawner) {
     Timer::after_secs(5).await;
     print_fan_info(&mut emc230x).await;
 
+    // Or control the fan via setting a RPM to target
+    // The device will attempt to get close to the target, but won't be exact
     defmt::info!("Setting Fan 1 to 1000 RPM");
     emc230x
         .set_mode(emc230x::FanSelect(1), emc230x::FanControl::Rpm(1000))
@@ -56,8 +55,8 @@ async fn main(_spawner: Spawner) {
         .unwrap();
     Timer::after_secs(10).await;
     print_fan_info(&mut emc230x).await;
-    emc230x.dump_info().await.unwrap();
 
+    // You can switch back to duty cycle mode at any point
     defmt::info!("Setting Fan 1 to 35% duty cycle");
     emc230x
         .set_mode(emc230x::FanSelect(1), emc230x::FanControl::DutyCycle(35))
@@ -65,20 +64,11 @@ async fn main(_spawner: Spawner) {
         .unwrap();
     Timer::after_secs(10).await;
     print_fan_info(&mut emc230x).await;
-    emc230x.dump_info().await.unwrap();
 
-    defmt::info!("Setting Fan 1 to 75% duty cycle");
-    emc230x
-        .set_mode(emc230x::FanSelect(1), emc230x::FanControl::DutyCycle(75))
-        .await
-        .unwrap();
-    Timer::after_secs(5).await;
-    print_fan_info(&mut emc230x).await;
-    emc230x.dump_info().await.unwrap();
-
+    // A simple example loop to demonstrate changing the duty cycle
     let mut target_duty_cycle = 20_u8;
     loop {
-        Timer::after_secs(5).await;
+        Timer::after_secs(2).await;
         if target_duty_cycle < 100 {
             target_duty_cycle += 1;
         } else {
