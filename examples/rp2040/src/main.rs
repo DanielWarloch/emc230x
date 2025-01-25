@@ -9,6 +9,7 @@ use embassy_rp::{
 };
 use embassy_time::Timer;
 use emc230x::{Emc230x, EMC2301_I2C_ADDR};
+use fans::FanSelect;
 use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
@@ -16,7 +17,7 @@ bind_interrupts!(struct Irqs {
 });
 
 async fn print_fan_info(dev: &mut Emc230x<EmbassyI2c<'_, I2C0, Async>>) {
-    let fan_select = emc230x::FanSelect(1);
+    let fan_select = FanSelect(1);
     let duty_cycle = dev.duty_cycle(fan_select).await.unwrap();
     let rpm = dev.rpm(fan_select).await.unwrap();
     defmt::info!("Fan 1: Duty Cycle: {}%; RPM: {}", duty_cycle, rpm);

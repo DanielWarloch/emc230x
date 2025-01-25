@@ -21,6 +21,7 @@ use core::{
     future::Future,
 };
 use embedded_hal_async as hal;
+pub use fans::{FanControl, FanDutyCycle, FanRpm, FanSelect};
 use hal::i2c::I2c;
 
 pub use error::Error;
@@ -36,18 +37,6 @@ pub const EMC2301_I2C_ADDR: u8 = 0b0010_1111;
 ///
 /// See Equation 4-3, page 17 of the datasheet. ((SIMPLIFIED_RPM_FACTOR * m) / COUNT)
 const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
-
-/// Fan Control Mode
-///
-/// The fan can be controlled by either setting the duty cycle or a target RPM.
-#[derive(Clone, Copy, Debug)]
-pub enum FanControl {
-    DutyCycle(u8),
-    Rpm(u16),
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct FanSelect(pub u8);
 
 /// Fetch a read-only register from the device
 macro_rules! register_ro {
@@ -268,7 +257,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Fetch the current duty cycle of the fan
-    pub async fn duty_cycle(&mut self, sel: FanSelect) -> Result<u8, Error> {
+    pub async fn duty_cycle(&mut self, sel: FanSelect) -> Result<FanDutyCycle, Error> {
         self.valid_fan(sel)?;
         let drive = self.fan_setting(sel).await?;
         let duty = drive.duty_cycle();
@@ -276,7 +265,11 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Set the duty cycle of the fan
-    pub async fn set_duty_cycle(&mut self, sel: FanSelect, duty: u8) -> Result<(), Error> {
+    pub async fn set_duty_cycle(
+        &mut self,
+        sel: FanSelect,
+        duty: FanDutyCycle,
+    ) -> Result<(), Error> {
         self.valid_fan(sel)?;
         let drive = FanDriveSetting::from_duty_cycle(duty);
         self.set_fan_setting(sel, drive).await?;
@@ -284,7 +277,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Fetch the current RPM of the fan
-    pub async fn rpm(&mut self, sel: FanSelect) -> Result<u16, Error> {
+    pub async fn rpm(&mut self, sel: FanSelect) -> Result<FanRpm, Error> {
         self.valid_fan(sel)?;
         let raw_low = self.tach_reading_low_byte(sel).await?;
         let raw_high = self.tach_reading_high_byte(sel).await?;
@@ -296,7 +289,7 @@ impl<I2C: I2c> Emc230x<I2C> {
     }
 
     /// Set the target RPM of the fan
-    pub async fn set_rpm(&mut self, sel: FanSelect, rpm: u16) -> Result<(), Error> {
+    pub async fn set_rpm(&mut self, sel: FanSelect, rpm: FanRpm) -> Result<(), Error> {
         self.valid_fan(sel)?;
 
         let raw = self.calc_raw_rpm(sel, rpm).await?;
