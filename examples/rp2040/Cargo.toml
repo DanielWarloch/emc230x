@@ -13,6 +13,6 @@ embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy.git", feat
 embassy-executor = { git = "https://github.com/embassy-rs/embassy.git", default-features = false, features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread"] }
 embassy-rp = { git = "https://github.com/embassy-rs/embassy.git", features = ["unstable-pac", "time-driver", "critical-section-impl", "rp2040"] }
 embassy-time = { git = "https://github.com/embassy-rs/embassy.git", features = ["defmt-timestamp-uptime"]}
-fans = "0.1"
+fans = "0.2"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 emc230x = { path = "../.." }
