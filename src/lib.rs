@@ -16,13 +16,23 @@ extern crate std;
 #[cfg(any(test, feature = "alloc"))]
 extern crate alloc;
 
+#[cfg(not(any(feature = "sync", feature = "async")))]
+compile_error!("You should probably choose at least one of `sync` and `async` features.");
+
+#[cfg(feature = "sync")]
+use embedded_hal::i2c::ErrorType;
+#[cfg(feature = "sync")]
+use embedded_hal::i2c::I2c;
+#[cfg(feature = "async")]
+use embedded_hal_async::i2c::ErrorType as AsyncErrorType;
+#[cfg(feature = "async")]
+use embedded_hal_async::i2c::I2c as AsyncI2c;
+
 use core::{
     fmt::{self, Debug, Formatter},
     future::Future,
 };
-use embedded_hal_async as hal;
 pub use fans::{FanControl, FanDutyCycle, FanRpm, FanSelect};
-use hal::i2c::I2c;
 
 pub use error::Error;
 use registers::*;
@@ -38,6 +48,7 @@ pub const EMC2301_I2C_ADDR: u8 = 0b0010_1111;
 /// See Equation 4-3, page 17 of the datasheet. ((SIMPLIFIED_RPM_FACTOR * m) / COUNT)
 const _SIMPLIFIED_RPM_FACTOR: f64 = 3_932_160.0;
 
+#[cfg(feature = "async")]
 /// Fetch a read-only register from the device
 macro_rules! register_ro {
     ($get:ident, $return_type:ty) => {
@@ -48,6 +59,7 @@ macro_rules! register_ro {
     };
 }
 
+#[cfg(feature = "async")]
 /// Fetch and set a register from the device which applies to all fans
 macro_rules! register {
     ($get:ident, $set:ident, $return_type:ty) => {
@@ -64,6 +76,7 @@ macro_rules! register {
     };
 }
 
+#[cfg(feature = "async")]
 /// Fetch and set a register from the device which applies to a specific fan
 macro_rules! fan_register {
     ($get:ident, $set:ident, $reg_type:ty) => {
@@ -78,6 +91,51 @@ macro_rules! fan_register {
             self.valid_fan(sel)?;
             let reg = fan_register_address(sel, <$reg_type>::OFFSET)?;
             self.write_register(reg, value.into()).await?;
+            Ok(())
+        }
+    };
+}
+
+#[cfg(feature = "sync")]
+/// Fetch a read-only register from the device
+macro_rules! register_ro {
+    ($get:ident, $return_type:ty) => {
+        pub fn $get(&mut self) -> Result<$return_type, Error> {
+            self.read_register::<$return_type>(<$return_type>::ADDRESS)
+        }
+    };
+}
+
+#[cfg(feature = "sync")]
+/// Fetch and set a register from the device which applies to all fans
+macro_rules! register {
+    ($get:ident, $set:ident, $return_type:ty) => {
+        pub fn $get(&mut self) -> Result<$return_type, Error> {
+            self.read_register::<$return_type>(<$return_type>::ADDRESS)
+        }
+
+        pub fn $set(&mut self, value: $return_type) -> Result<(), Error> {
+            self.write_register(<$return_type>::ADDRESS, value.into())?;
+            Ok(())
+        }
+    };
+}
+
+#[cfg(feature = "sync")]
+/// Fetch and set a register from the device which applies to a specific fan
+macro_rules! fan_register {
+    ($get:ident, $set:ident, $reg_type:ty) => {
+        pub fn $get(&mut self, sel: FanSelect) -> Result<$reg_type, Error> {
+            self.valid_fan(sel)?;
+            let reg = fan_register_address(sel, <$reg_type>::OFFSET)?;
+            let value = self.read_register(reg)?;
+            Ok(value)
+        }
+
+        pub fn $set(&mut self, sel: FanSelect, value: $reg_type) -> Result<(), Error> {
+            self.valid_fan(sel)?;
+            let reg = fan_register_address(sel, <$reg_type>::OFFSET)?;
+            self.write_register(reg, value.into())?;
             Ok(())
         }
     };
@@ -113,7 +171,15 @@ pub(crate) fn hacky_round_u16(value: f64) -> u16 {
     }
 }
 
-pub struct Emc230x<I2C> {
+/// An TMP468 sensor on the I2C bus `I`.
+///
+/// The address of the sensor will be `DEFAULT_ADDRESS` from this package,
+/// unless there is some kind of special address translating hardware in use.
+#[maybe_async_cfg::maybe(
+    sync(feature = "sync", self = "Emc230x"),
+    async(feature = "async", keep_self)
+)]
+pub struct AsyncEmc230x<I2C> {
     /// I2C bus
     i2c: I2C,
 
@@ -129,7 +195,11 @@ pub struct Emc230x<I2C> {
     poles: [u8; 5],
 }
 
-impl<I2C> Debug for Emc230x<I2C> {
+#[maybe_async_cfg::maybe(
+    sync(feature = "sync", self = "Emc230x"),
+    async(feature = "async", keep_self)
+)]
+impl<I2C> Debug for AsyncEmc230x<I2C> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Emc230x")
             .field("address", &self.address)
@@ -139,7 +209,15 @@ impl<I2C> Debug for Emc230x<I2C> {
     }
 }
 
-impl<I2C: I2c> Emc230x<I2C> {
+#[maybe_async_cfg::maybe(
+    sync(
+        feature = "sync",
+        self = "Emc230x",
+        idents(AsyncI2c(sync = "I2c"), AsyncErrorType(sync = "ErrorType"))
+    ),
+    async(feature = "async", keep_self)
+)]
+impl<I2C: AsyncI2c + AsyncErrorType> AsyncEmc230x<I2C> {
     /// Manufacturer ID
     const MANUFACTURER_ID: u8 = 0x5D;
 
@@ -224,9 +302,9 @@ impl<I2C: I2c> Emc230x<I2C> {
         Self::TACH_FREQUENCY_HZ
     }
 
-    fn _mode(&mut self, _sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
-        async { todo!() }
-    }
+    // async fn _mode(&mut self, _sel: FanSelect) -> impl Future<Output = Result<FanControl, Error>> {
+    //     async { todo!() }
+    // }
 
     /// Set the mode of the fan
     pub async fn set_mode(&mut self, sel: FanSelect, mode: FanControl) -> Result<(), Error> {
@@ -414,6 +492,7 @@ impl<I2C: I2c> Emc230x<I2C> {
 
     /// Dump all the info and registers from the EMC230x Device
     pub async fn dump_info(&mut self) -> Result<(), Error> {
+        #[cfg(feature = "async")]
         macro_rules! defmt_info_register {
             ($dev:expr, $reg:tt) => {
                 let value = $dev.$reg().await?;
@@ -421,9 +500,25 @@ impl<I2C: I2c> Emc230x<I2C> {
             };
         }
 
+        #[cfg(feature = "async")]
         macro_rules! defmt_info_fan_register {
             ($dev:expr, $reg:tt, $fan:expr) => {
                 let value = $dev.$reg(FanSelect($fan)).await?;
+                defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
+            };
+        }
+        #[cfg(feature = "sync")]
+        macro_rules! defmt_info_register {
+            ($dev:expr, $reg:tt) => {
+                let value = $dev.$reg()?;
+                defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
+            };
+        }
+
+        #[cfg(feature = "sync")]
+        macro_rules! defmt_info_fan_register {
+            ($dev:expr, $reg:tt, $fan:expr) => {
+                let value = $dev.$reg(FanSelect($fan))?;
                 defmt::info!("{}: {:#04x}", stringify!($reg), u8::from(value));
             };
         }
